@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -23,13 +24,7 @@ CONOCIMIENTO_DIR = (
 
 
 def _get_gcloud_credentials(project_id: str):
-    """Builds refreshable OAuth2 credentials from `gcloud auth print-access-token`.
-
-    On Cloud Workstations, `google.auth.default()` falls back to the VM's GCE
-    metadata server (which lacks `cloud-platform` scope and raises
-    ACCESS_TOKEN_SCOPE_INSUFFICIENT) when only `gcloud auth login` was run.
-    Using `gcloud auth print-access-token` uses the user's CLI session directly.
-    """
+    """Builds refreshable OAuth2 credentials from `gcloud auth print-access-token`."""
     from google.auth import credentials as auth_credentials
 
     class _GcloudCliCredentials(auth_credentials.Credentials):
@@ -64,6 +59,26 @@ def _get_gcloud_credentials(project_id: str):
         return creds
 
 
+def _extract_pdf_text(pdf_path: Path) -> str:
+    """Extracts plain text from a local PDF file for fallback RAG upload."""
+    try:
+        from pypdf import PdfReader
+
+        reader = PdfReader(str(pdf_path))
+        return "\n\n".join(
+            f"[Documento: {pdf_path.name} - Página {idx}]\n{(page.extract_text() or '').strip()}"
+            for idx, page in enumerate(reader.pages, start=1)
+        )
+    except Exception:
+        res = subprocess.run(
+            ["pdftotext", str(pdf_path), "-"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return f"[Documento: {pdf_path.name} - Página 1]\n{res.stdout.strip()}"
+
+
 def setup_rag_corpus(
     project_id: str,
     region: str,
@@ -86,18 +101,26 @@ def setup_rag_corpus(
 
     creds = _get_gcloud_credentials(project_id)
 
-    # Candidate regions in order of preference (some new projects restrict RagManagedDb in europe-west1)
+    # New GCP sandbox projects restrict RAG Engine in europe-west1 to allowlisted projects,
+    # whereas europe-west4 and europe-west3 are open in EU. Check europe-west4 first if region is europe-west1.
     candidate_regions = []
-    for loc in (region, "europe-west4", "europe-west3", "us-central1"):
+    preferred_order = (
+        ("europe-west4", "europe-west3", region)
+        if region == "europe-west1"
+        else (region, "europe-west4", "europe-west3")
+    )
+    for loc in preferred_order:
         if loc and loc not in candidate_regions:
             candidate_regions.append(loc)
 
     existing_corpus = None
-    active_region = region
+    active_region = candidate_regions[0]
 
     for loc in candidate_regions:
         try:
-            print(f"Initializing Vertex AI RAG Engine in project={project_id}, location={loc}...")
+            print(
+                f"Initializing Vertex AI RAG Engine in project={project_id}, location={loc}..."
+            )
             vertexai.init(project=project_id, location=loc, credentials=creds)
             for c in rag.list_corpora():
                 if c.display_name == corpus_display_name:
@@ -119,11 +142,22 @@ def setup_rag_corpus(
             print(f"Created new RAG corpus in {loc}: {existing_corpus.name}")
             break
         except Exception as exc:
-            print(f"  -> Notice: Could not provision RAG corpus in {loc} ({exc}). Trying fallback region...")
+            print(
+                f"  -> Notice: Could not provision RAG corpus in {loc} ({exc}). Trying next EU region..."
+            )
             continue
 
     if existing_corpus is None:
-        raise RuntimeError("Could not create or list Vertex AI RAG corpus in any candidate region.")
+        raise RuntimeError(
+            "Could not create or list Vertex AI RAG corpus in any candidate EU region."
+        )
+
+    transformation_config = rag.TransformationConfig(
+        chunking_config=rag.ChunkingConfig(
+            chunk_size=512,
+            chunk_overlap=100,
+        )
+    )
 
     # Check if files are already uploaded to avoid duplicate indexing on re-runs
     existing_files = list(rag.list_files(corpus_name=existing_corpus.name))
@@ -138,36 +172,60 @@ def setup_rag_corpus(
         ]
         gcs_uris = [f"gs://{gcs_bucket}/03_Conocimiento/{name}" for name in pdf_names]
         imported = False
-        if active_region == region:
-            try:
-                print(f"Importing 03_Conocimiento PDFs from GCS into {existing_corpus.name}...")
-                transformation_config = rag.TransformationConfig(
-                    chunking_config=rag.ChunkingConfig(
-                        chunk_size=512,
-                        chunk_overlap=100,
-                    )
-                )
-                rag.import_files(
-                    corpus_name=existing_corpus.name,
-                    paths=gcs_uris,
-                    transformation_config=transformation_config,
-                )
-                imported = True
-            except Exception as exc:
-                print(
-                    f"  -> GCS import fallback ({exc}); uploading local PDFs directly via rag.upload_file..."
-                )
 
+        # 1. Try importing from Cloud Storage via rag.import_files
+        try:
+            print(
+                f"Importing 03_Conocimiento PDFs from gs://{gcs_bucket}/03_Conocimiento/ into {existing_corpus.name}..."
+            )
+            import_resp = rag.import_files(
+                corpus_name=existing_corpus.name,
+                paths=gcs_uris,
+                transformation_config=transformation_config,
+            )
+            imported_count = getattr(import_resp, "imported_rag_files_count", 0)
+            print(f"  -> Imported {imported_count} file(s) from GCS.")
+            if imported_count > 0 or len(list(rag.list_files(corpus_name=existing_corpus.name))) >= 2:
+                imported = True
+        except Exception as exc:
+            print(f"  -> GCS import notice ({exc}); falling back to direct upload...")
+
+        # 2. Fallback to direct upload with explicit transformation_config
         if not imported:
             for pdf_name in pdf_names:
                 local_pdf = CONOCIMIENTO_DIR / pdf_name
-                print(f"  -> Uploading {pdf_name} to {existing_corpus.name}...")
-                rag.upload_file(
-                    corpus_name=existing_corpus.name,
-                    path=str(local_pdf),
-                    display_name=pdf_name,
-                    description=f"EREIN DEMO-2 {pdf_name}",
-                )
+                try:
+                    print(f"  -> Uploading {pdf_name} to {existing_corpus.name}...")
+                    rag.upload_file(
+                        corpus_name=existing_corpus.name,
+                        path=str(local_pdf),
+                        display_name=pdf_name,
+                        description=f"EREIN DEMO-2 {pdf_name}",
+                        transformation_config=transformation_config,
+                    )
+                except Exception:
+                    # Fallback to uploading extracted plain text if PDF direct upload fails
+                    txt_name = pdf_name.replace(".pdf", ".txt")
+                    print(
+                        f"  -> Uploading extracted text {txt_name} to {existing_corpus.name}..."
+                    )
+                    text_content = _extract_pdf_text(local_pdf)
+                    with tempfile.NamedTemporaryFile(
+                        mode="w", suffix=".txt", delete=False, encoding="utf-8"
+                    ) as tmp_f:
+                        tmp_f.write(text_content)
+                        tmp_path = tmp_f.name
+                    try:
+                        rag.upload_file(
+                            corpus_name=existing_corpus.name,
+                            path=tmp_path,
+                            display_name=pdf_name,
+                            description=f"EREIN DEMO-2 {pdf_name}",
+                            transformation_config=transformation_config,
+                        )
+                    finally:
+                        if os.path.exists(tmp_path):
+                            os.remove(tmp_path)
 
     print("Verifying RAG retrieval with test query ('P01 ingreso recurrente')...")
     try:
@@ -185,6 +243,7 @@ def setup_rag_corpus(
     with open(env_file, "w", encoding="utf-8") as f:
         f.write(f'export PROJECT_ID="{project_id}"\n')
         f.write(f'export REGION="{region}"\n')
+        f.write(f'export RAG_LOCATION="{active_region}"\n')
         f.write('export BQ_DATASET="erein_operaciones"\n')
         f.write(f'export GCS_BUCKET="{gcs_bucket}"\n')
         f.write(f'export RAG_CORPUS_NAME="{existing_corpus.name}"\n')
