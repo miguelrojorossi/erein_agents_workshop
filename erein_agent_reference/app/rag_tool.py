@@ -71,7 +71,7 @@ def consultar_politica(consulta: str) -> str:
         consulta: Términos de búsqueda o descripción de la discrepancia/alerta a consultar en la política (ej. 'ingreso recurrente nóminas bonus P01 P02', 'apuestas categoría GAMBLING P07 P10 P13', 'alquiler no declarado P11', 'antigüedad grupo empresarial P12', 'documento ilegible plazo P08').
     """
     project_id = os.getenv("PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT", "")
-    region = os.getenv("REGION", "europe-west1")
+    region = os.getenv("RAG_LOCATION") or os.getenv("REGION", "europe-west4")
     rag_corpus = os.getenv("RAG_CORPUS_NAME", "")
 
     if project_id and rag_corpus:

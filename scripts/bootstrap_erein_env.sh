@@ -112,17 +112,17 @@ gcloud storage cp -r "${DATA_ROOT}/03_Conocimiento" "gs://${GCS_BUCKET}/" --proj
 echo "  -> Note: 04_Simulacion_Cliente and 05_Evaluacion are intentionally kept separate."
 
 # 4. Provision Vertex AI RAG Engine Corpus for 03_Conocimiento
-echo "[4/5] Setting up Vertex AI RAG Engine corpus for 03_Conocimiento..."
+echo "[4/5] Setting up Vertex AI RAG Engine corpus for 03_Conocimiento (europe-west4)..."
 if command -v uv >/dev/null 2>&1; then
   uv run --with google-cloud-aiplatform python3 "${SCRIPT_DIR}/setup_rag_corpus.py" \
     --project-id="${PROJECT_ID}" \
-    --region="${REGION}" \
+    --region="europe-west4" \
     --gcs-bucket="${GCS_BUCKET}" \
     --env-file="${REPO_ROOT}/.env.workshop"
 else
   python3 "${SCRIPT_DIR}/setup_rag_corpus.py" \
     --project-id="${PROJECT_ID}" \
-    --region="${REGION}" \
+    --region="europe-west4" \
     --gcs-bucket="${GCS_BUCKET}" \
     --env-file="${REPO_ROOT}/.env.workshop"
 fi

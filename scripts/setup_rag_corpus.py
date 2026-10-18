@@ -238,11 +238,12 @@ def setup_rag_corpus(
     except Exception as exc:
         print(f"  -> Note on test query: {exc}")
 
-    # Persist environment variables
+    # Persist environment variables (keep primary workshop REGION as europe-west1 for Cloud Run/BQ/GCS)
+    primary_region = os.environ.get("REGION", "europe-west1")
     os.makedirs(os.path.dirname(os.path.abspath(env_file)), exist_ok=True)
     with open(env_file, "w", encoding="utf-8") as f:
         f.write(f'export PROJECT_ID="{project_id}"\n')
-        f.write(f'export REGION="{region}"\n')
+        f.write(f'export REGION="{primary_region}"\n')
         f.write(f'export RAG_LOCATION="{active_region}"\n')
         f.write('export BQ_DATASET="erein_operaciones"\n')
         f.write(f'export GCS_BUCKET="{gcs_bucket}"\n')
@@ -263,8 +264,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--region",
-        default=os.environ.get("REGION", "europe-west1"),
-        help="Google Cloud region (default: europe-west1)",
+        default=os.environ.get("RAG_LOCATION", "europe-west4"),
+        help="Google Cloud region for RAG Engine (default: europe-west4)",
     )
     parser.add_argument(
         "--gcs-bucket",

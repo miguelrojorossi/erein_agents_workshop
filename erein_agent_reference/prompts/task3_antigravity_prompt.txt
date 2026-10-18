@@ -13,7 +13,7 @@ Use agents-cli to create an agent named "erein-operational-reviewer" with the fo
    - Analyze financing applications (cases SYN-001 through SYN-010) by contrasting declared customer data against available evidences in BigQuery, PDF payslips/receipts/contracts in Cloud Storage, and bank transactions (July–September 2026).
    - Resolve discrepancies within your operational authority, request strictly necessary missing documents from the customer, close cases with expired evidence deadlines (10 days after request with reminders at days 3 and 7), or escalate complex/sensitive cases to Operations with a structured analysis.
 3. Tool Integration (Hybrid RAG Engine + MCP Server):
-   - Native ADK Tool (`consultar_politica`): Create a Python tool inside the ADK agent that queries the Vertex AI RAG Engine corpus (`$RAG_CORPUS_NAME` in `europe-west1`) containing `Politica_Revision_Operativa_DEMO2.pdf` and `Procedimiento_Revision_Operativa_DEMO2.pdf` to retrieve rules P01–P13.
+   - Native ADK Tool (`consultar_politica`): Create a Python tool inside the ADK agent using `vertexai.rag.retrieval_query` that queries the Vertex AI RAG Engine corpus (`$RAG_CORPUS_NAME` in `europe-west4`) containing `Politica_Revision_Operativa_DEMO2.pdf` and `Procedimiento_Revision_Operativa_DEMO2.pdf` to retrieve rules P01–P13.
    - MCP Server (`$MCP_URL`): Connect to the MCP server to invoke:
      * `consultar_expediente(caso_id)`: Retrieves declared fields, initial evidences (payslip amounts are masked to enforce reading the PDF), document IDs, and prior recorded actions.
      * `leer_documento(caso_id, documento_id)`: Reads the authorized PDF for `caso_id` and returns the document ID, page number, and extracted text.
