@@ -19,6 +19,8 @@ import argparse
 import json
 import os
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -70,6 +72,20 @@ def update_local_state(case_id: str, reset: bool = False) -> None:
     )
 
 
+def _run_bq_query(project_id: str, sql: str) -> None:
+    subprocess.run(
+        [
+            "bq",
+            f"--project_id={project_id}",
+            "query",
+            "--use_legacy_sql=false",
+            "--quiet",
+            sql,
+        ],
+        check=True,
+    )
+
+
 def update_cloud_state(
     project_id: str,
     dataset_id: str,
@@ -77,48 +93,56 @@ def update_cloud_state(
     case_id: str,
     reset: bool = False,
 ) -> None:
-    """Uploads the reserved PDF to GCS and updates BigQuery tables idempotently."""
-    try:
-        from google.cloud import bigquery
-        from google.cloud import storage
-    except ImportError:
+    """Uploads the reserved PDF to GCS and updates BigQuery tables idempotently via gcloud/bq CLI."""
+    if not shutil.which("bq") or not shutil.which("gcloud"):
         print(
-            "[Cloud State] google-cloud-bigquery / google-cloud-storage not installed; "
-            "skipping cloud update (local state updated)."
+            "[Cloud State] gcloud/bq CLI not found; skipping cloud update (local state updated)."
         )
         return
 
-    bq = bigquery.Client(project=project_id)
     table_evidencias = f"`{project_id}.{dataset_id}.evidencias`"
     table_documentos = f"`{project_id}.{dataset_id}.documentos`"
 
     if reset:
         if case_id in ("SYN-002", "ALL"):
-            bq.query(
-                f"DELETE FROM {table_evidencias} WHERE evidencia_id = 'SYN-002-E05'"
-            ).result()
-            bq.query(
-                f"DELETE FROM {table_documentos} WHERE documento_id = 'DOC-SYN-002-E05'"
-            ).result()
-            bq.query(
-                f"""
-                UPDATE {table_documentos}
-                SET ruta_relativa = NULL, disponibilidad = 'Ausente', disponible_inicial = FALSE
-                WHERE documento_id = 'DOC-SYN-002-E04'
-                """
-            ).result()
-            print("[BigQuery] Restored SYN-002 to initial Phase 1 state.")
+            try:
+                _run_bq_query(
+                    project_id,
+                    f"DELETE FROM {table_evidencias} WHERE evidencia_id = 'SYN-002-E05'",
+                )
+                _run_bq_query(
+                    project_id,
+                    f"DELETE FROM {table_documentos} WHERE documento_id = 'DOC-SYN-002-E05'",
+                )
+                _run_bq_query(
+                    project_id,
+                    f"""
+                    UPDATE {table_documentos}
+                    SET ruta_relativa = NULL, disponibilidad = 'Ausente', disponible_inicial = FALSE
+                    WHERE documento_id = 'DOC-SYN-002-E04'
+                    """,
+                )
+                print("[BigQuery] Restored SYN-002 to initial Phase 1 state.")
+            except Exception as exc:
+                print(f"[Cloud State] Skipping cloud reset ({exc}).")
         return
 
     if case_id == "SYN-002":
         # 1. Upload reserved PDF to GCS
         pdf_local = DATA_ROOT / "04_Simulacion_Cliente" / "SYN-002_septiembre.pdf"
-        gcs_rel_path = "04_Simulacion_Cliente/SYN-002_septiembre.pdf"
-        storage_client = storage.Client(project=project_id)
-        bucket = storage_client.bucket(gcs_bucket)
-        blob = bucket.blob(gcs_rel_path)
-        blob.upload_from_filename(str(pdf_local), content_type="application/pdf")
-        print(f"[Cloud Storage] Uploaded gs://{gcs_bucket}/{gcs_rel_path}")
+        gcs_uri = f"gs://{gcs_bucket}/04_Simulacion_Cliente/SYN-002_septiembre.pdf"
+        subprocess.run(
+            [
+                "gcloud",
+                "storage",
+                "cp",
+                str(pdf_local),
+                gcs_uri,
+                f"--project={project_id}",
+            ],
+            check=True,
+        )
+        print(f"[Cloud Storage] Uploaded {gcs_uri}")
 
         # 2. Idempotently insert SYN-002-E05 in evidencias
         merge_evidencia_sql = f"""
@@ -140,7 +164,7 @@ def update_cloud_state(
           INSERT (evidencia_id, caso_id, fase, tipo_fuente, fecha_evidencia, periodo, importe_eur, disponibilidad, contenido)
           VALUES (S.evidencia_id, S.caso_id, S.fase, S.tipo_fuente, S.fecha_evidencia, S.periodo, S.importe_eur, S.disponibilidad, S.contenido)
         """
-        bq.query(merge_evidencia_sql).result()
+        _run_bq_query(project_id, merge_evidencia_sql)
         print("[BigQuery] Upserted evidence SYN-002-E05 into evidencias (no duplicate keys).")
 
         # 3. Idempotently insert DOC-SYN-002-E05 and update missing reference DOC-SYN-002-E04
@@ -164,7 +188,7 @@ def update_cloud_state(
           INSERT (documento_id, caso_id, evidencia_id, fase, tipo_documento, periodo, ruta_relativa, disponibilidad, pagina, disponible_inicial)
           VALUES (S.documento_id, S.caso_id, S.evidencia_id, S.fase, S.tipo_documento, S.periodo, S.ruta_relativa, S.disponibilidad, S.pagina, S.disponible_inicial)
         """
-        bq.query(merge_doc_sql).result()
+        _run_bq_query(project_id, merge_doc_sql)
 
         update_absent_doc_sql = f"""
         UPDATE {table_documentos}
@@ -174,7 +198,7 @@ def update_cloud_state(
           disponible_inicial = TRUE
         WHERE documento_id = 'DOC-SYN-002-E04'
         """
-        bq.query(update_absent_doc_sql).result()
+        _run_bq_query(project_id, update_absent_doc_sql)
         print(
             "[BigQuery] Upserted DOC-SYN-002-E05 and updated DOC-SYN-002-E04 in documentos."
         )
@@ -199,7 +223,7 @@ def update_cloud_state(
           INSERT (evidencia_id, caso_id, fase, tipo_fuente, fecha_evidencia, periodo, importe_eur, disponibilidad, contenido)
           VALUES (S.evidencia_id, S.caso_id, S.fase, S.tipo_fuente, S.fecha_evidencia, S.periodo, S.importe_eur, S.disponibilidad, S.contenido)
         """
-        bq.query(merge_clarification_sql).result()
+        _run_bq_query(project_id, merge_clarification_sql)
         print("[BigQuery] Incorporated customer clarification RESP-SYN-007-01 for SYN-007.")
 
 
@@ -242,10 +266,23 @@ def main() -> None:
 
     update_local_state(args.case, reset=args.reset)
 
-    if not args.local_only and args.project_id:
-        bucket = args.gcs_bucket or f"{args.project_id}-erein-docs"
+    project_id = args.project_id
+    if not project_id and not args.local_only and not args.reset:
+        try:
+            project_id = subprocess.check_output(
+                ["gcloud", "config", "get-value", "project"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+            ).strip()
+            if project_id == "(unset)":
+                project_id = ""
+        except Exception:
+            project_id = ""
+
+    if not args.local_only and project_id:
+        bucket = args.gcs_bucket or f"{project_id}-erein-docs"
         update_cloud_state(
-            project_id=args.project_id,
+            project_id=project_id,
             dataset_id=args.dataset,
             gcs_bucket=bucket,
             case_id=args.case,

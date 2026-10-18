@@ -3,8 +3,13 @@
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 from typing import Any
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 try:
     from pypdf import PdfReader
@@ -15,6 +20,48 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CONOCIMIENTO_DIR = (
     REPO_ROOT / "EREIN_CdU_Revision_Operativa_Agentica" / "03_Conocimiento"
 )
+
+
+def _get_gcp_credentials(project_id: str):
+    """Returns Google Cloud credentials with cloud-platform scope (supports Cloud Workstations & Agent Runtime)."""
+    import google.auth
+    from google.auth import credentials as auth_credentials
+
+    # In Cloud Run / Agent Runtime, use standard ADC service account credentials
+    if os.getenv("K_SERVICE") or os.getenv("GOOGLE_CLOUD_AGENT_ENGINE_ID"):
+        creds, _ = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+        return creds
+
+    # On Cloud Workstations where only `gcloud auth login` was run, use gcloud CLI token
+    class _GcloudCliCredentials(auth_credentials.Credentials):
+        def __init__(self, quota_project_id: str) -> None:
+            super().__init__()
+            self._quota_project_id = quota_project_id
+            self.refresh(None)
+
+        @property
+        def quota_project_id(self) -> str:
+            return self._quota_project_id
+
+        def refresh(self, request) -> None:
+            token = subprocess.check_output(
+                ["gcloud", "auth", "print-access-token"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+            ).strip()
+            if not token:
+                raise RuntimeError("Empty token from gcloud auth print-access-token")
+            self.token = token
+
+    try:
+        return _GcloudCliCredentials(quota_project_id=project_id)
+    except Exception:
+        creds, _ = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+        return creds
 
 
 def consultar_politica(consulta: str) -> str:
@@ -30,13 +77,20 @@ def consultar_politica(consulta: str) -> str:
     if project_id and rag_corpus:
         try:
             import vertexai
-            from vertexai.preview import rag
+            try:
+                from vertexai import rag
+            except ImportError:
+                from vertexai.preview import rag
 
-            vertexai.init(project=project_id, location=region)
+            loc_match = re.search(r"/locations/([^/]+)/ragCorpora/", rag_corpus)
+            corpus_location = loc_match.group(1) if loc_match else region
+            creds = _get_gcp_credentials(project_id)
+            vertexai.init(
+                project=project_id, location=corpus_location, credentials=creds
+            )
             response = rag.retrieval_query(
                 rag_resources=[rag.RagResource(rag_corpus=rag_corpus)],
                 text=consulta,
-                similarity_top_k=5,
             )
             contexts = getattr(getattr(response, "contexts", None), "contexts", [])
             fragments: list[dict[str, Any]] = []
