@@ -7,12 +7,15 @@ Indexes ONLY the two policy/procedure documents in 03_Conocimiento:
 """
 
 import argparse
+import base64
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
 import warnings
+import zlib
 
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -70,13 +73,35 @@ def _extract_pdf_text(pdf_path: Path) -> str:
             for idx, page in enumerate(reader.pages, start=1)
         )
     except Exception:
-        res = subprocess.run(
-            ["pdftotext", str(pdf_path), "-"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return f"[Documento: {pdf_path.name} - Página 1]\n{res.stdout.strip()}"
+        pdf_bytes = pdf_path.read_bytes()
+        pages = []
+        for m in re.finditer(rb"stream\r?\n(.*?)\r?\n?endstream", pdf_bytes, re.DOTALL):
+            raw = m.group(1).strip()
+            dec = None
+            for fn in (
+                lambda b: zlib.decompress(base64.a85decode(b, adobe=True)),
+                lambda b: zlib.decompress(base64.a85decode(b)),
+                lambda b: zlib.decompress(b),
+            ):
+                try:
+                    dec = fn(raw)
+                    break
+                except Exception:
+                    continue
+            if dec is None or (b"BT" not in dec and b"Tj" not in dec and b"TJ" not in dec):
+                continue
+            parts = []
+            for sm in re.finditer(rb"\((?:\\.|[^\\()])*\)", dec):
+                s = sm.group(0)[1:-1]
+                s = re.sub(rb"\\([0-7]{1,3})", lambda om: bytes([int(om.group(1), 8)]), s)
+                s = s.replace(b"\\(", b"(").replace(b"\\)", b")").replace(b"\\\\", b"\\")
+                parts.append(s.decode("cp1252", errors="ignore"))
+            if parts:
+                pages.append(
+                    f"[Documento: {pdf_path.name} - Página {len(pages) + 1}]\n"
+                    + "\n".join(parts)
+                )
+        return "\n\n".join(pages)
 
 
 def setup_rag_corpus(

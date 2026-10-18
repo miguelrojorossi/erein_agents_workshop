@@ -1,5 +1,6 @@
 """Native ADK Agent Tool for querying EREIN DEMO-2 Policies via Vertex AI RAG Engine."""
 
+import base64
 import json
 import os
 from pathlib import Path
@@ -7,6 +8,7 @@ import re
 import subprocess
 from typing import Any
 import warnings
+import zlib
 
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -143,19 +145,50 @@ def consultar_politica(consulta: str) -> str:
                         }
                     )
             else:
-                res = subprocess.run(
-                    ["pdftotext", str(pdf_path), "-"],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-                docs_output.append(
-                    {
-                        "documento": pdf_name,
-                        "pagina": 1,
-                        "texto": res.stdout.strip(),
-                    }
-                )
+                pdf_bytes = pdf_path.read_bytes()
+                page_idx = 0
+                for m in re.finditer(
+                    rb"stream\r?\n(.*?)\r?\n?endstream", pdf_bytes, re.DOTALL
+                ):
+                    raw = m.group(1).strip()
+                    dec = None
+                    for fn in (
+                        lambda b: zlib.decompress(base64.a85decode(b, adobe=True)),
+                        lambda b: zlib.decompress(base64.a85decode(b)),
+                        lambda b: zlib.decompress(b),
+                    ):
+                        try:
+                            dec = fn(raw)
+                            break
+                        except Exception:
+                            continue
+                    if dec is None or (
+                        b"BT" not in dec and b"Tj" not in dec and b"TJ" not in dec
+                    ):
+                        continue
+                    parts = []
+                    for sm in re.finditer(rb"\((?:\\.|[^\\()])*\)", dec):
+                        s = sm.group(0)[1:-1]
+                        s = re.sub(
+                            rb"\\([0-7]{1,3})",
+                            lambda om: bytes([int(om.group(1), 8)]),
+                            s,
+                        )
+                        s = (
+                            s.replace(b"\\(", b"(")
+                            .replace(b"\\)", b")")
+                            .replace(b"\\\\", b"\\")
+                        )
+                        parts.append(s.decode("cp1252", errors="ignore"))
+                    if parts:
+                        page_idx += 1
+                        docs_output.append(
+                            {
+                                "documento": pdf_name,
+                                "pagina": page_idx,
+                                "texto": "\n".join(parts),
+                            }
+                        )
 
     return json.dumps(
         {

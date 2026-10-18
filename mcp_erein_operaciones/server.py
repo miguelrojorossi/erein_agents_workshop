@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import csv
 from datetime import datetime, timezone
 import io
@@ -9,6 +10,7 @@ import re
 import subprocess
 import tempfile
 from typing import Any
+import zlib
 
 try:
     from fastmcp import FastMCP
@@ -117,6 +119,35 @@ def _read_csv(rel_path: str) -> list[dict[str, Any]]:
         return rows
 
 
+def _stdlib_extract_pdf_pages(pdf_bytes: bytes) -> list[dict[str, Any]]:
+    """Pure-Python standard library PDF text extractor (supports ReportLab ASCII85+Flate streams)."""
+    pages: list[dict[str, Any]] = []
+    for m in re.finditer(rb"stream\r?\n(.*?)\r?\n?endstream", pdf_bytes, re.DOTALL):
+        raw = m.group(1).strip()
+        dec = None
+        for fn in (
+            lambda b: zlib.decompress(base64.a85decode(b, adobe=True)),
+            lambda b: zlib.decompress(base64.a85decode(b)),
+            lambda b: zlib.decompress(b),
+        ):
+            try:
+                dec = fn(raw)
+                break
+            except Exception:
+                continue
+        if dec is None or (b"BT" not in dec and b"Tj" not in dec and b"TJ" not in dec):
+            continue
+        parts: list[str] = []
+        for sm in re.finditer(rb"\((?:\\.|[^\\()])*\)", dec):
+            s = sm.group(0)[1:-1]
+            s = re.sub(rb"\\([0-7]{1,3})", lambda om: bytes([int(om.group(1), 8)]), s)
+            s = s.replace(b"\\(", b"(").replace(b"\\)", b")").replace(b"\\\\", b"\\")
+            parts.append(s.decode("cp1252", errors="ignore"))
+        if parts:
+            pages.append({"pagina": len(pages) + 1, "texto": "\n".join(parts)})
+    return pages
+
+
 def _extract_pdf_text_bytes(pdf_bytes: bytes) -> list[dict[str, Any]]:
     if PdfReader is not None:
         reader = PdfReader(io.BytesIO(pdf_bytes))
@@ -124,6 +155,10 @@ def _extract_pdf_text_bytes(pdf_bytes: bytes) -> list[dict[str, Any]]:
         for idx, page in enumerate(reader.pages, start=1):
             text = (page.extract_text() or "").strip()
             pages.append({"pagina": idx, "texto": text})
+        return pages
+
+    pages = _stdlib_extract_pdf_pages(pdf_bytes)
+    if pages:
         return pages
 
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=True) as tmp:
