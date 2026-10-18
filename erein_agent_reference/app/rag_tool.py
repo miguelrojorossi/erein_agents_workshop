@@ -123,17 +123,25 @@ def _get_gcp_credentials(project_id: str):
         return creds
 
 
+DEFAULT_RAG_CORPUS_NAME = ""
+DEFAULT_PROJECT_ID = ""
+
+
 def consultar_politica(consulta: str) -> str:
     """Recupera las reglas de la Política de Revisión Operativa DEMO-2 (P01 a P13) y el Procedimiento Operativo DEMO-2 mediante Vertex AI RAG Engine.
 
     Args:
         consulta: Términos de búsqueda o descripción de la discrepancia/alerta a consultar en la política (ej. 'ingreso recurrente nóminas bonus P01 P02', 'apuestas categoría GAMBLING P07 P10 P13', 'alquiler no declarado P11', 'antigüedad grupo empresarial P12', 'documento ilegible plazo P08').
     """
-    project_id = os.getenv("PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT", "")
+    project_id = (
+        os.getenv("PROJECT_ID")
+        or os.getenv("GOOGLE_CLOUD_PROJECT")
+        or DEFAULT_PROJECT_ID
+    )
     region = os.getenv("RAG_LOCATION") or os.getenv("REGION", "europe-west4")
     if region == "europe-west1":
         region = "europe-west4"
-    rag_corpus = os.getenv("RAG_CORPUS_NAME", "")
+    rag_corpus = os.getenv("RAG_CORPUS_NAME") or DEFAULT_RAG_CORPUS_NAME
 
     if project_id:
         try:

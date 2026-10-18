@@ -275,6 +275,25 @@ def setup_rag_corpus(
         f.write(f'export RAG_CORPUS_NAME="{existing_corpus.name}"\n')
 
     print(f"Saved RAG_CORPUS_NAME={existing_corpus.name} to {env_file}")
+
+    # Also bake DEFAULT_RAG_CORPUS_NAME and DEFAULT_PROJECT_ID into erein_agent_reference/app/rag_tool.py
+    rag_tool_path = REPO_ROOT / "erein_agent_reference" / "app" / "rag_tool.py"
+    if rag_tool_path.exists():
+        content = rag_tool_path.read_text(encoding="utf-8")
+        content = re.sub(
+            r'^DEFAULT_RAG_CORPUS_NAME = ".*"$',
+            f'DEFAULT_RAG_CORPUS_NAME = "{existing_corpus.name}"',
+            content,
+            flags=re.MULTILINE,
+        )
+        content = re.sub(
+            r'^DEFAULT_PROJECT_ID = ".*"$',
+            f'DEFAULT_PROJECT_ID = "{project_id}"',
+            content,
+            flags=re.MULTILINE,
+        )
+        rag_tool_path.write_text(content, encoding="utf-8")
+
     return existing_corpus.name
 
 
