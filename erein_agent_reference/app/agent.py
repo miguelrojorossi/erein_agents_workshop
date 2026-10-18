@@ -6,6 +6,14 @@ Combines:
 """
 
 import os
+
+# Disable certificate-bound (CAA) tokens on Agent Runtime so Vertex AI RAG Engine
+# regional endpoints accept the Agent Identity workload OAuth2 token.
+os.environ["GOOGLE_API_ENABLE_RUNTIME_BOUND_TOKEN"] = "false"
+os.environ["GOOGLE_API_PREVENT_AGENT_TOKEN_SHARING_FOR_GCP_SERVICES"] = "false"
+os.environ["GOOGLE_API_USE_CLIENT_CERTIFICATE"] = "false"
+os.environ["GOOGLE_API_USE_MTLS_ENDPOINT"] = "never"
+
 from google.adk.agents import Agent
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, StreamableHTTPConnectionParams
 from .rag_tool import consultar_politica
