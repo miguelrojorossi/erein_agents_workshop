@@ -1,0 +1,62 @@
+[
+  {
+    "name": "caso_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "cliente_ficticio",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "fecha_evaluacion",
+    "type": "DATE",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "prestamo_eur",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "plazo_meses",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "ingreso_declarado_eur_mes",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "cuota_declarada_eur_mes",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "situacion_laboral_declarada",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "motivo_revision",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "explicacion_cliente",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "antiguedad_declarada_desde",
+    "type": "DATE",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "ingreso_alquiler_declarado_eur_mes",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+  }
+]

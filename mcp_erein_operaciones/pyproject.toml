@@ -1,0 +1,11 @@
+[project]
+name = "mcp-erein-operaciones"
+version = "0.1.0"
+description = "EREIN Operational Review MCP Server on Cloud Run (BigQuery + Cloud Storage)"
+requires-python = ">=3.10"
+dependencies = [
+    "fastmcp==2.13.1",
+    "google-cloud-bigquery>=3.25.0",
+    "google-cloud-storage>=2.18.0",
+    "pypdf>=5.0.0",
+]

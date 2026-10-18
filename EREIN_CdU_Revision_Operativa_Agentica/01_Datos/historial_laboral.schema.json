@@ -1,0 +1,42 @@
+[
+  {
+    "name": "caso_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "empresa_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "empresa",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "grupo",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "fecha_alta",
+    "type": "DATE",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "fecha_baja",
+    "type": "DATE",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "fecha_consulta",
+    "type": "DATE",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "documento_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+]

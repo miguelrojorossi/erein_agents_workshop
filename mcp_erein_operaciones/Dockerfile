@@ -1,0 +1,20 @@
+# Use the official Python image
+FROM python:3.12-slim
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Copy project and bundled fallback data into /app
+COPY . /app
+WORKDIR /app
+
+# Allow statements and log messages to immediately appear in the logs
+ENV PYTHONUNBUFFERED=1
+
+# Install dependencies
+RUN uv sync
+
+EXPOSE $PORT
+
+# Run the FastMCP server
+CMD ["uv", "run", "server.py"]

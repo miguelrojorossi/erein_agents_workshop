@@ -1,0 +1,3 @@
+caso_id,empresa_id,empresa,grupo,fecha_alta,fecha_baja,fecha_consulta,documento_id
+SYN-004,EMP-DEMO-A,Grupo Norte Servicios Demo,Grupo Norte Demo,2021-10-01,2026-08-31,2026-10-10,DOC-SYN-004-E05
+SYN-004,EMP-DEMO-B,Grupo Norte Digital Demo,Grupo Norte Demo,2026-09-01,,2026-10-10,DOC-SYN-004-E05

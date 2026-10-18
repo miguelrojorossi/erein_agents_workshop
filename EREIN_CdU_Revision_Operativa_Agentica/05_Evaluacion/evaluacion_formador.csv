@@ -1,0 +1,11 @@
+caso_id,estado_esperado,ingreso_esperado_eur_mes,cuota_esperada_eur_mes,accion_esperada,reglas,resultado_agente,cumple,observaciones
+SYN-001,Resuelto,2100,,Excluir bonus y corregir ingreso,P01 P02 P09,,,
+SYN-002,Pendiente de evidencia,,,"Pedir nómina septiembre. Tras respuesta simulada, escalar nuevo salario por P03.",P01 P03 P09,,,
+SYN-003,Resuelto,2200,,Corregir extracción de 22000 a 2200 citando texto original,P01 P06 P09,,,
+SYN-004,Resuelto,2300,,Conservar antigüedad reconocida desde 2021-10-01. Contrastar historial y certificado; no usar solo fecha alta empresa actual.,P01 P06 P09 P12,,,
+SYN-005,Resuelto,2400,180,Registrar cuota no declarada,P01 P05 P09,,,
+SYN-006,Escalado a Operaciones,3000,,Apuestas 450/3000 = 15% cada mes; 1350/9000 = 15% trimestre. Sin incidencias en el periodo. Escalar sin rechazo automático.,P01 P07 P09 P13,,,
+SYN-007,Escalado a Operaciones,2000,,Salario 2000; renta bruta observada 700/mes. No sumar 700 al ingreso computable. Escalar admisibilidad del alquiler.,P01 P09 P11,,,
+SYN-008,Resuelto,2300,,Descartar alerta de apuestas: ticket PlayStation 499 EUR coincide con movimiento. Registrar reclasificación sin alterar el original.,P01 P09 P10,,,
+SYN-009,Resuelto,2200,150,Tratar conjuntamente ingreso y cuota. Excluir transferencias propias.,P01 P02 P05 P09,,,
+SYN-010,Cerrado por evidencia incompleta,,,Cierre por evidencia incompleta. No etiquetar como no elegible.,P08 P09,,,

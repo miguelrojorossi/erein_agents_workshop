@@ -1,0 +1,11 @@
+caso_id,cliente_ficticio,fecha_evaluacion,prestamo_eur,plazo_meses,ingreso_declarado_eur_mes,cuota_declarada_eur_mes,situacion_laboral_declarada,motivo_revision,explicacion_cliente,antiguedad_declarada_desde,ingreso_alquiler_declarado_eur_mes
+SYN-001,Alex Demo,2026-10-14,8000,36,2500,0,Asalariado,Diferencia entre ingresos declarados y abonos observados,Incluí la nómina y el bonus de septiembre,,0
+SYN-002,Sam Demo,2026-10-14,8000,36,2500,0,Asalariado,Subida salarial sin nómina reciente,Me subieron el sueldo en septiembre,,0
+SYN-003,Cris Demo,2026-10-14,8000,36,2200,0,Asalariado,Diferencia entre extracción documental y movimientos,,,0
+SYN-004,Dani Demo,2026-10-14,8000,36,2300,0,Asalariado indefinido,Diferencia de antigüedad entre declaración y alta en empresa actual,He cambiado de empresa dentro del mismo grupo.,2021-10-01,0
+SYN-005,Eli Demo,2026-10-14,8000,36,2400,0,Asalariado,Cuota no declarada,,,0
+SYN-006,Fran Demo,2026-10-14,8000,36,3000,0,Asalariado,Alerta por movimientos recurrentes categorizados como apuestas,,,0
+SYN-007,Gabi Demo,2026-10-14,8000,36,2000,0,Asalariado,Abonos periódicos adicionales a la nómina,,,0
+SYN-008,Hugo Demo,2026-10-14,8000,36,2300,0,Asalariado,Alerta por categoría bancaria GAMBLING,,,0
+SYN-009,Iris Demo,2026-10-14,8000,36,2600,0,Asalariado,Diferencias en ingresos y obligaciones,Incluí transferencias desde mi otra cuenta,,0
+SYN-010,Jan Demo,2026-10-14,8000,36,2500,0,Asalariado,Documento ilegible y plazo vencido,,,0

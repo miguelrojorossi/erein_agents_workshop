@@ -1,0 +1,17 @@
+[
+  {
+    "name": "regla_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "ambito",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "criterio",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+]

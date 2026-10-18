@@ -1,0 +1,17 @@
+# Python caches & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.uv-cache/
+
+# Local workshop runtime state & generated env files
+.env.workshop
+mcp_erein_operaciones/data/runtime_state.json
+EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/resultados_evaluacion_agente.csv
+
+# Root archive / raw briefing duplicates (already structured under EREIN_CdU_Revision_Operativa_Agentica/)
+EREIN_CdU_Revision_Operativa_Agentica.zip
+EREIN_CdU_Revision_Operativa_Agentica.docx
+00_Documentacion/

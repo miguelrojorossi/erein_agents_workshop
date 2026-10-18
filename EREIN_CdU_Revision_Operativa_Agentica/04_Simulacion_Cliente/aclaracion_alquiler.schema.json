@@ -1,0 +1,27 @@
+[
+  {
+    "name": "evento_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "caso_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "fecha",
+    "type": "DATE",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "mensaje",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "habilitar",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+]

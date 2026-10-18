@@ -1,0 +1,64 @@
+evidencia_id,caso_id,fase,tipo_fuente,fecha_evidencia,periodo,importe_eur,disponibilidad,contenido
+SYN-001-E01,SYN-001,Inicial,Open Banking,2026-08-31,Agosto,2100,Disponible,Abono de nómina de Empresa Demo
+SYN-001-E02,SYN-001,Inicial,Nómina,2026-08-31,Agosto,2100,Disponible,Neto ordinario a percibir. Documento legible.
+SYN-001-E03,SYN-001,Inicial,Open Banking,2026-09-30,Septiembre,2100,Disponible,Abono de nómina de Empresa Demo
+SYN-001-E04,SYN-001,Inicial,Nómina,2026-09-30,Septiembre,2100,Disponible,Neto ordinario a percibir. Documento legible.
+SYN-001-E05,SYN-001,Inicial,Open Banking,2026-09-30,Septiembre,400,Disponible,Abono separado de bonus
+SYN-001-E06,SYN-001,Inicial,Justificante bonus,2026-09-30,Septiembre,400,Disponible,Pago extraordinario no recurrente
+SYN-002-E01,SYN-002,Inicial,Open Banking,2026-08-31,Agosto,2100,Disponible,Abono nómina
+SYN-002-E02,SYN-002,Inicial,Nómina,2026-08-31,Agosto,2100,Disponible,Neto a percibir
+SYN-002-E03,SYN-002,Inicial,Open Banking,2026-09-30,Septiembre,2500,Disponible,Abono nómina
+SYN-002-E04,SYN-002,Inicial,Nómina,2026-09-30,Septiembre,,Ausente,No aportada
+SYN-003-E01,SYN-003,Inicial,Open Banking,2026-08-31,Agosto,2200,Disponible,Abono de nómina de Empresa Demo
+SYN-003-E02,SYN-003,Inicial,Nómina,2026-08-31,Agosto,2200,Disponible,Neto ordinario a percibir. Documento legible.
+SYN-003-E03,SYN-003,Inicial,Open Banking,2026-09-30,Septiembre,2200,Disponible,Abono de nómina de Empresa Demo
+SYN-003-E04,SYN-003,Inicial,Nómina,2026-09-30,Septiembre,2200,Disponible,Neto ordinario a percibir. Documento legible.
+SYN-003-E05,SYN-003,Inicial,Extracción automática,2026-09-30,Septiembre,22000,Disponible,Campo neto extraído automáticamente: 22000 EUR; pendiente de contraste con documento original.
+SYN-004-E01,SYN-004,Inicial,Open Banking,2026-08-31,Agosto,2300,Disponible,Abono de nómina
+SYN-004-E02,SYN-004,Inicial,Nómina,2026-08-31,Agosto,2300,Disponible,Documento salarial disponible para lectura
+SYN-004-E03,SYN-004,Inicial,Open Banking,2026-09-30,Septiembre,2300,Disponible,Abono de nómina
+SYN-004-E04,SYN-004,Inicial,Nómina,2026-09-30,Septiembre,2300,Disponible,Documento salarial disponible para lectura
+SYN-004-E05,SYN-004,Inicial,Open Administration,2026-10-10,Vigente,,Disponible,Historial laboral con dos empleadores y cambio el 01/09/2026
+SYN-004-E06,SYN-004,Inicial,Certificado laboral,2026-10-10,Vigente,,Disponible,Certificado empresarial de continuidad y antigüedad reconocida
+SYN-005-E01,SYN-005,Inicial,Open Banking,2026-08-31,Agosto,2400,Disponible,Abono de nómina de Empresa Demo
+SYN-005-E02,SYN-005,Inicial,Nómina,2026-08-31,Agosto,2400,Disponible,Neto ordinario a percibir. Documento legible.
+SYN-005-E03,SYN-005,Inicial,Open Banking,2026-09-30,Septiembre,2400,Disponible,Abono de nómina de Empresa Demo
+SYN-005-E04,SYN-005,Inicial,Nómina,2026-09-30,Septiembre,2400,Disponible,Neto ordinario a percibir. Documento legible.
+SYN-005-E05,SYN-005,Inicial,Open Banking,2026-08-15,2026-08,180,Disponible,Cargo mensual de Financiera Demo
+SYN-005-E06,SYN-005,Inicial,Open Banking,2026-09-15,2026-09,180,Disponible,Cargo mensual de Financiera Demo
+SYN-005-E07,SYN-005,Inicial,Contrato financiero,2026-07-01,Vigente,180,Disponible,Cuota mensual de 180 EUR
+SYN-006-E01,SYN-006,Inicial,Open Banking,2026-08-31,Agosto,3000,Disponible,Abono de nómina
+SYN-006-E02,SYN-006,Inicial,Nómina,2026-08-31,Agosto,3000,Disponible,Documento salarial disponible para lectura
+SYN-006-E03,SYN-006,Inicial,Open Banking,2026-09-30,Septiembre,3000,Disponible,Abono de nómina
+SYN-006-E04,SYN-006,Inicial,Nómina,2026-09-30,Septiembre,3000,Disponible,Documento salarial disponible para lectura
+SYN-006-E05,SYN-006,Inicial,Open Banking,2026-10-10,Vigente,450,Disponible,"Pagos recurrentes al mismo operador de apuestas: 450 EUR por mes, julio-septiembre"
+SYN-006-E06,SYN-006,Inicial,Open Banking,2026-10-10,Vigente,,Disponible,"Sin descubiertos, devoluciones ni impagos en el periodo completo simulado julio-septiembre. Saldo positivo en todas las transacciones."
+SYN-007-E01,SYN-007,Inicial,Open Banking,2026-08-31,Agosto,2000,Disponible,Abono de nómina
+SYN-007-E02,SYN-007,Inicial,Nómina,2026-08-31,Agosto,2000,Disponible,Documento salarial disponible para lectura
+SYN-007-E03,SYN-007,Inicial,Open Banking,2026-09-30,Septiembre,2000,Disponible,Abono de nómina
+SYN-007-E04,SYN-007,Inicial,Nómina,2026-09-30,Septiembre,2000,Disponible,Documento salarial disponible para lectura
+SYN-007-E05,SYN-007,Inicial,Contrato de alquiler,2026-10-10,Vigente,700,Disponible,Contrato de arrendamiento vigente con renta mensual de 700 EUR
+SYN-007-E06,SYN-007,Inicial,Open Banking,2026-10-10,Vigente,700,Disponible,"Tres transferencias mensuales del mismo pagador con concepto alquiler, julio-septiembre"
+SYN-008-E01,SYN-008,Inicial,Open Banking,2026-08-31,Agosto,2300,Disponible,Abono de nómina
+SYN-008-E02,SYN-008,Inicial,Nómina,2026-08-31,Agosto,2300,Disponible,Documento salarial disponible para lectura
+SYN-008-E03,SYN-008,Inicial,Open Banking,2026-09-30,Septiembre,2300,Disponible,Abono de nómina
+SYN-008-E04,SYN-008,Inicial,Nómina,2026-09-30,Septiembre,2300,Disponible,Documento salarial disponible para lectura
+SYN-008-E05,SYN-008,Inicial,Open Banking,2026-09-20,Septiembre,499,Disponible,Cargo de tarjeta GAME DEMO ELECTRONICA. Categoría del proveedor: GAMBLING. Referencia TX-SYN-008-09-GAME
+SYN-008-E06,SYN-008,Inicial,Justificante de compra,2026-09-20,Septiembre,499,Disponible,Ticket disponible con detalle de artículo y referencia de pago
+SYN-009-E01,SYN-009,Inicial,Open Banking,2026-08-31,Agosto,2200,Disponible,Abono de nómina de Empresa Demo
+SYN-009-E02,SYN-009,Inicial,Nómina,2026-08-31,Agosto,2200,Disponible,Neto ordinario a percibir. Documento legible.
+SYN-009-E03,SYN-009,Inicial,Open Banking,2026-09-30,Septiembre,2200,Disponible,Abono de nómina de Empresa Demo
+SYN-009-E04,SYN-009,Inicial,Nómina,2026-09-30,Septiembre,2200,Disponible,Neto ordinario a percibir. Documento legible.
+SYN-009-E05,SYN-009,Inicial,Open Banking,2026-08-31,2026-08,400,Disponible,Transferencia desde otra cuenta propia
+SYN-009-E06,SYN-009,Inicial,Open Banking,2026-08-31,2026-08,150,Disponible,Cargo de Financiera Demo
+SYN-009-E07,SYN-009,Inicial,Open Banking,2026-09-30,2026-09,400,Disponible,Transferencia desde otra cuenta propia
+SYN-009-E08,SYN-009,Inicial,Open Banking,2026-09-30,2026-09,150,Disponible,Cargo de Financiera Demo
+SYN-009-E09,SYN-009,Inicial,Certificado titularidad,2026-10-01,Octubre,,Disponible,Acredita que la cuenta origen de las transferencias pertenece a Iris Demo
+SYN-009-E10,SYN-009,Inicial,Contrato financiero,2026-07-01,Vigente,150,Disponible,Cuota mensual de 150 EUR
+SYN-010-E01,SYN-010,Inicial,Open Banking,2026-08-31,Agosto,2100,Disponible,Abono nómina
+SYN-010-E02,SYN-010,Inicial,Open Banking,2026-09-30,Septiembre,2100,Disponible,Abono nómina
+SYN-010-E03,SYN-010,Inicial,Nómina,2026-08-31,Agosto,2100,Disponible,Neto ordinario
+SYN-010-E04,SYN-010,Inicial,Nómina,2026-09-30,Septiembre,,Ilegible,Importe no legible
+SYN-010-E05,SYN-010,Inicial,Interacción,2026-10-03,Octubre,,Disponible,Solicitud de copia legible de nómina de septiembre
+SYN-010-E06,SYN-010,Inicial,Interacción,2026-10-06,Octubre,,Disponible,Primer recordatorio sin respuesta
+SYN-010-E07,SYN-010,Inicial,Interacción,2026-10-10,Octubre,,Disponible,Segundo recordatorio sin respuesta

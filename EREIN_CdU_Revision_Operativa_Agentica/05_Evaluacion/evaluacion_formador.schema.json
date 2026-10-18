@@ -1,0 +1,47 @@
+[
+  {
+    "name": "caso_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "estado_esperado",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "ingreso_esperado_eur_mes",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "cuota_esperada_eur_mes",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "accion_esperada",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "reglas",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "resultado_agente",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "cumple",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "observaciones",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+]

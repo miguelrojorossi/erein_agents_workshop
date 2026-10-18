@@ -1,0 +1,87 @@
+[
+  {
+    "name": "caso_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "accion_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "tipo_accion",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "estado",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "ingreso_actualizado_eur_mes",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "cuota_actualizada_eur_mes",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "situacion_laboral_actualizada",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "evidencias_ids",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "reglas_ids",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "justificacion",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "mensaje_cliente",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "motivo_escalado",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "fecha_accion",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "antiguedad_reconocida_desde",
+    "type": "DATE",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "renta_bruta_observada_eur_mes",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "tratamiento_alerta",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "version_politica",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+]

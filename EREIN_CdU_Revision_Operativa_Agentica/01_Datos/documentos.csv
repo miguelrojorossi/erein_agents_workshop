@@ -1,0 +1,25 @@
+documento_id,caso_id,evidencia_id,fase,tipo_documento,periodo,ruta_relativa,disponibilidad,pagina,disponible_inicial
+DOC-SYN-001-E02,SYN-001,SYN-001-E02,Inicial,Nómina,Agosto,02_Documentos/nominas/SYN-001_agosto.pdf,Disponible,1,true
+DOC-SYN-001-E04,SYN-001,SYN-001-E04,Inicial,Nómina,Septiembre,02_Documentos/nominas/SYN-001_septiembre.pdf,Disponible,1,true
+DOC-SYN-002-E02,SYN-002,SYN-002-E02,Inicial,Nómina,Agosto,02_Documentos/nominas/SYN-002_agosto.pdf,Disponible,1,true
+DOC-SYN-002-E04,SYN-002,SYN-002-E04,Inicial,Nómina,Septiembre,,Ausente,1,false
+DOC-SYN-003-E02,SYN-003,SYN-003-E02,Inicial,Nómina,Agosto,02_Documentos/nominas/SYN-003_agosto.pdf,Disponible,1,true
+DOC-SYN-003-E04,SYN-003,SYN-003-E04,Inicial,Nómina,Septiembre,02_Documentos/nominas/SYN-003_septiembre.pdf,Disponible,1,true
+DOC-SYN-004-E02,SYN-004,SYN-004-E02,Inicial,Nómina,Agosto,02_Documentos/nominas/SYN-004_agosto.pdf,Disponible,1,true
+DOC-SYN-004-E04,SYN-004,SYN-004-E04,Inicial,Nómina,Septiembre,02_Documentos/nominas/SYN-004_septiembre.pdf,Disponible,1,true
+DOC-SYN-004-E05,SYN-004,SYN-004-E05,Inicial,Open Administration,Vigente,02_Documentos/justificantes/SYN-004_vida_laboral.pdf,Disponible,1,true
+DOC-SYN-004-E06,SYN-004,SYN-004-E06,Inicial,Certificado laboral,Vigente,02_Documentos/justificantes/SYN-004_certificado_continuidad.pdf,Disponible,1,true
+DOC-SYN-005-E02,SYN-005,SYN-005-E02,Inicial,Nómina,Agosto,02_Documentos/nominas/SYN-005_agosto.pdf,Disponible,1,true
+DOC-SYN-005-E04,SYN-005,SYN-005-E04,Inicial,Nómina,Septiembre,02_Documentos/nominas/SYN-005_septiembre.pdf,Disponible,1,true
+DOC-SYN-006-E02,SYN-006,SYN-006-E02,Inicial,Nómina,Agosto,02_Documentos/nominas/SYN-006_agosto.pdf,Disponible,1,true
+DOC-SYN-006-E04,SYN-006,SYN-006-E04,Inicial,Nómina,Septiembre,02_Documentos/nominas/SYN-006_septiembre.pdf,Disponible,1,true
+DOC-SYN-007-E02,SYN-007,SYN-007-E02,Inicial,Nómina,Agosto,02_Documentos/nominas/SYN-007_agosto.pdf,Disponible,1,true
+DOC-SYN-007-E04,SYN-007,SYN-007-E04,Inicial,Nómina,Septiembre,02_Documentos/nominas/SYN-007_septiembre.pdf,Disponible,1,true
+DOC-SYN-007-E05,SYN-007,SYN-007-E05,Inicial,Contrato de alquiler,Vigente,02_Documentos/justificantes/SYN-007_contrato_alquiler.pdf,Disponible,1,true
+DOC-SYN-008-E02,SYN-008,SYN-008-E02,Inicial,Nómina,Agosto,02_Documentos/nominas/SYN-008_agosto.pdf,Disponible,1,true
+DOC-SYN-008-E04,SYN-008,SYN-008-E04,Inicial,Nómina,Septiembre,02_Documentos/nominas/SYN-008_septiembre.pdf,Disponible,1,true
+DOC-SYN-008-E06,SYN-008,SYN-008-E06,Inicial,Justificante de compra,Septiembre,02_Documentos/justificantes/SYN-008_ticket_playstation.pdf,Disponible,1,true
+DOC-SYN-009-E02,SYN-009,SYN-009-E02,Inicial,Nómina,Agosto,02_Documentos/nominas/SYN-009_agosto.pdf,Disponible,1,true
+DOC-SYN-009-E04,SYN-009,SYN-009-E04,Inicial,Nómina,Septiembre,02_Documentos/nominas/SYN-009_septiembre.pdf,Disponible,1,true
+DOC-SYN-010-E03,SYN-010,SYN-010-E03,Inicial,Nómina,Agosto,02_Documentos/nominas/SYN-010_agosto.pdf,Disponible,1,true
+DOC-SYN-010-E04,SYN-010,SYN-010-E04,Inicial,Nómina,Septiembre,02_Documentos/nominas/SYN-010_septiembre.pdf,Ilegible,1,true

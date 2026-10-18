@@ -1,0 +1,57 @@
+[
+  {
+    "name": "transaccion_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "caso_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "cuenta_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "fecha",
+    "type": "DATE",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "importe_eur",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "moneda",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "concepto",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "contraparte",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "categoria_proveedor",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "saldo_tras_movimiento_eur",
+    "type": "NUMERIC",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "estado",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+]
