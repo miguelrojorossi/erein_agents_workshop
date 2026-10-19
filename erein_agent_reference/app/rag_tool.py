@@ -13,13 +13,6 @@ import zlib
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# Disable certificate-bound (CAA) tokens on Agent Runtime so regional Vertex AI
-# RAG Engine endpoints (europe-west4-aiplatform.googleapis.com) accept the Agent Identity token.
-os.environ["GOOGLE_API_ENABLE_RUNTIME_BOUND_TOKEN"] = "false"
-os.environ["GOOGLE_API_PREVENT_AGENT_TOKEN_SHARING_FOR_GCP_SERVICES"] = "false"
-os.environ["GOOGLE_API_USE_CLIENT_CERTIFICATE"] = "false"
-os.environ["GOOGLE_API_USE_MTLS_ENDPOINT"] = "never"
-
 try:
     from pypdf import PdfReader
 except ImportError:
@@ -39,22 +32,42 @@ def _get_gcp_credentials(project_id: str):
     import google.auth
     from google.auth import credentials as auth_credentials
     import google.auth.transport.requests
+    from google.oauth2 import credentials as oauth2_credentials
 
-    os.environ["GOOGLE_API_ENABLE_RUNTIME_BOUND_TOKEN"] = "false"
-    os.environ["GOOGLE_API_PREVENT_AGENT_TOKEN_SHARING_FOR_GCP_SERVICES"] = "false"
-    os.environ["GOOGLE_API_USE_CLIENT_CERTIFICATE"] = "false"
-    os.environ["GOOGLE_API_USE_MTLS_ENDPOINT"] = "never"
-
-    # In Cloud Run / Agent Runtime, use standard ADC credentials with unbound token
+    # In Cloud Run / Agent Runtime, fetch an unbound token ONLY for the RAG client
+    # and restore os.environ immediately so Agent Runtime's native mTLS telemetry/trace exporter is unaffected.
     if os.getenv("K_SERVICE") or os.getenv("GOOGLE_CLOUD_AGENT_ENGINE_ID"):
-        creds, _ = google.auth.default(
-            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        prev_bound = os.environ.get("GOOGLE_API_ENABLE_RUNTIME_BOUND_TOKEN")
+        prev_share = os.environ.get(
+            "GOOGLE_API_PREVENT_AGENT_TOKEN_SHARING_FOR_GCP_SERVICES"
         )
         try:
+            os.environ["GOOGLE_API_ENABLE_RUNTIME_BOUND_TOKEN"] = "false"
+            os.environ[
+                "GOOGLE_API_PREVENT_AGENT_TOKEN_SHARING_FOR_GCP_SERVICES"
+            ] = "false"
+            creds, _ = google.auth.default(
+                scopes=["https://www.googleapis.com/auth/cloud-platform"]
+            )
             creds.refresh(google.auth.transport.requests.Request())
-        except Exception:
-            pass
-        return creds
+            if getattr(creds, "token", None):
+                return oauth2_credentials.Credentials(
+                    token=creds.token, quota_project_id=project_id
+                )
+            return creds
+        finally:
+            if prev_bound is None:
+                os.environ.pop("GOOGLE_API_ENABLE_RUNTIME_BOUND_TOKEN", None)
+            else:
+                os.environ["GOOGLE_API_ENABLE_RUNTIME_BOUND_TOKEN"] = prev_bound
+            if prev_share is None:
+                os.environ.pop(
+                    "GOOGLE_API_PREVENT_AGENT_TOKEN_SHARING_FOR_GCP_SERVICES", None
+                )
+            else:
+                os.environ[
+                    "GOOGLE_API_PREVENT_AGENT_TOKEN_SHARING_FOR_GCP_SERVICES"
+                ] = prev_share
 
     # On Cloud Workstations where only `gcloud auth login` was run, use gcloud CLI token
     class _GcloudCliCredentials(auth_credentials.Credentials):

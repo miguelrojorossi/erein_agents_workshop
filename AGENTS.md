@@ -3,15 +3,8 @@
 When asked to create or scaffold the `erein-operational-reviewer` agent using `agents-cli`:
 
 1. **Reuse Reference RAG Tool (`consultar_politica`)**:
-   - Copy `erein_agent_reference/app/rag_tool.py` into `erein-operational-reviewer/app/rag_tool.py` and import `consultar_politica` from `.rag_tool` in `erein-operational-reviewer/app/agent.py`.
-   - Ensure the following environment variables are set at the top of `agent.py` and `rag_tool.py` before any Vertex AI / Google Auth imports so that **Agent Runtime SPIFFE Agent Identity** (`--agent-identity`) requests unbound OAuth2 tokens compatible with regional Vertex AI RAG Engine endpoints (`europe-west4-aiplatform.googleapis.com`):
-     ```python
-     import os
-     os.environ["GOOGLE_API_ENABLE_RUNTIME_BOUND_TOKEN"] = "false"
-     os.environ["GOOGLE_API_PREVENT_AGENT_TOKEN_SHARING_FOR_GCP_SERVICES"] = "false"
-     os.environ["GOOGLE_API_USE_CLIENT_CERTIFICATE"] = "false"
-     os.environ["GOOGLE_API_USE_MTLS_ENDPOINT"] = "never"
-     ```
+   - Copy `erein_agent_reference/app/rag_tool.py` into the agent directory (`rag_tool.py`) and import `consultar_politica` in `agent.py`.
+   - Do **NOT** set `GOOGLE_API_USE_MTLS_ENDPOINT="never"` or `GOOGLE_API_ENABLE_RUNTIME_BOUND_TOKEN="false"` globally at the top of `agent.py`, as global overrides interfere with Agent Runtime's built-in OpenTelemetry / Cloud Trace exporter (`rag_tool.py` already scopes unbound token creation strictly inside `_get_gcp_credentials()` and restores `os.environ` immediately).
 
 2. **Do NOT Hardcode Policy or Procedure in Agent Instructions**:
    - **Never** paste or summarize the Policy rules (`P01`–`P13`), the Operational Procedure (`DEMO-2` states, deadlines, authority limits), or case-specific answers (`SYN-001`–`SYN-010`) into the agent's `instruction` / system prompt.
