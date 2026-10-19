@@ -243,28 +243,29 @@ Use agents-cli to create an agent named "erein-operational-reviewer" with the fo
 
 > **Tip:** You can also inspect or copy the ready-made reference implementation in `erein_agent_reference/app/agent.py` and `erein_agent_reference/app/rag_tool.py` at any time.
 
-4. Once Antigravity finishes creating the agent, exit Antigravity with `CTRL + C` twice, test the agent interactively on **`SYN-001`**, and then run a **pre-deployment evaluation** using **`agents-cli eval`** and the ground-truth dataset from `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/evaluacion_formador.csv`:
+4. Once Antigravity finishes creating the agent, ask it to run evaluations using the ground-truth evaluation files in `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion`:
+
+```markdown
+Use agents-cli eval to evaluate the agent in region europe-west1 (project $PROJECT_ID) using the ground-truth evaluation files in EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/evaluacion_formador.csv (prepare the evaluation suite with scripts/prepare_eval_suite.py and run agents-cli eval run --dataset tests/eval/datasets/erein-smoke-dataset.json --config tests/eval/eval_config.yaml --project $PROJECT_ID --region europe-west1).
+```
+
+Antigravity will generate the evaluation dataset from `05_Evaluacion/evaluacion_formador.csv` (`tests/eval/datasets/erein-smoke-dataset.json`) and execute `agents-cli eval run`, grading the agent's multi-turn traces with Vertex AI GenAI Evaluation's built-in metrics (`multi_turn_task_success`, `multi_turn_trajectory_quality`, `multi_turn_tool_use_quality`) and the custom ground-truth metric `erein_formador_ground_truth` (`tests/eval/erein_ground_truth_metric.py`), saving the JSON/HTML scorecard in `artifacts/grade_results/` and updating `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/resultados_evaluacion_agente.csv`.
+
+5. Once evals are done, exit Antigravity with `CTRL + C` twice and test the agent locally from the terminal against scenario **`SYN-001`** (Declared income of 2,500 € vs. 2,100 € payslip + 400 € bonus):
 
 ```bash
 cd ~/labs/erein_agents_workshop/erein-operational-reviewer
-
-# 4a. Quick single-case interactive run on SYN-001 (Declared income 2,500 € vs. 2,100 € payslip + 400 € bonus)
-agents-cli run "Realiza la revisión operativa del expediente SYN-001. Consulta el expediente, la política DEMO-2 en RAG, lee las nóminas en PDF, revisa las transacciones y registra la resolución correspondiente."
-
-# 4b. Prepare the 05_Evaluacion datasets and run local evaluation with agents-cli eval
-python3 ~/labs/erein_agents_workshop/scripts/prepare_eval_suite.py
-agents-cli eval run \
-  --dataset tests/eval/datasets/erein-smoke-dataset.json \
-  --config tests/eval/eval_config.yaml \
-  --project $PROJECT_ID \
-  --region europe-west1
+agents-cli run "Realiza la revisión operativa del expediente SYN-001"
 ```
 
-You will see the agent and evaluation pipeline:
-- Call `consultar_expediente`, query Vertex AI RAG Engine via `consultar_politica` (`P01`, `P02`, `P06`, `P09`), inspect the original PDF payslips on Cloud Storage via `leer_documento`, verify bank movements via `consultar_transacciones`, and persist the operational decision via `registrar_accion_expediente`.
-- Grade the multi-turn execution traces against `05_Evaluacion/evaluacion_formador.csv` (`SYN-001` and `SYN-003`) using Vertex AI GenAI Evaluation's built-in metrics (`multi_turn_task_success`, `multi_turn_trajectory_quality`, `multi_turn_tool_use_quality`) and the custom ground-truth metric `erein_formador_ground_truth` (`tests/eval/erein_ground_truth_metric.py`), saving a detailed JSON and HTML scorecard in `artifacts/grade_results/` and updating `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/resultados_evaluacion_agente.csv`.
+You will see the agent:
+- Call `consultar_expediente("SYN-001")` and observe that the payslip amounts are masked.
+- Call the native ADK RAG Engine tool `consultar_politica` to retrieve rules `P01`, `P02`, and `P09`.
+- Call `leer_documento` on `DOC-SYN-001-E02` (August, p. 1: 2,100 €) and `DOC-SYN-001-E04` (September, p. 1: 2,100 €).
+- Call `consultar_transacciones("SYN-001")` to confirm the 400 € payment is an extraordinary bonus (`BONUS`).
+- Call `registrar_accion_expediente` setting state to **`Resuelto`**, updating `ingreso_actualizado_eur_mes = 2100`, and citing `P01 P02 P09` (`version_politica = "DEMO-2"`).
 
-5. Now deploy the agent to **Agent Runtime** with **SPIFFE Agent Identity** and full OpenTelemetry trace/message content capture enabled (required for Cloud Trace inspection and Agent Runtime Evaluations):
+6. Now deploy the agent to **Agent Runtime** with **SPIFFE Agent Identity** and full OpenTelemetry trace/message content capture enabled (required for Cloud Trace inspection and Agent Runtime Evaluations):
 
 ```bash
 agents-cli scaffold enhance --deployment-target agent_runtime
@@ -277,7 +278,7 @@ agents-cli deploy \
 
 The deployment takes a few minutes to complete. After it finishes, the CLI outputs a confirmation message and a link to your agent's playground in the Google Cloud Console.
 
-6. Check your agent's **SPIFFE ID (Agent Identity)** and grant it access to your Vertex AI RAG Engine corpus and Cloud Trace telemetry:
+7. Check your agent's **SPIFFE ID (Agent Identity)** and grant it access to your Vertex AI RAG Engine corpus and Cloud Trace telemetry:
     1. In the Google Cloud Console, go to the [Agent Runtime Deployments](https://console.cloud.google.com/agent-platform/runtimes) page.
     2. Find the row for `erein-operational-reviewer`, and in the **Identity** column click **Copy to clipboard**. The identity looks similar to:
        `principal://agents.global.org-ORGANIZATION_ID.system.id.goog/resources/aiplatform/projects/PROJECT_NUMBER/locations/europe-west1/reasoningEngines/ENGINE_ID`
@@ -292,7 +293,7 @@ for ROLE in roles/aiplatform.user roles/cloudtrace.agent roles/telemetry.tracesW
 done
 ```
 
-7. Browse to [Agent Runtime](https://console.cloud.google.com/agent-platform/runtimes) in the Google Cloud Console, click on the **`erein-operational-reviewer`** agent, and test it in the **Playground** using scenario **`SYN-008`** (False positive gambling alert for a PlayStation 5 purchase):
+8. Browse to [Agent Runtime](https://console.cloud.google.com/agent-platform/runtimes) in the Google Cloud Console, click on the **`erein-operational-reviewer`** agent, and test it in the **Playground** using scenario **`SYN-008`** (False positive gambling alert for a PlayStation 5 purchase):
 
 ```markdown
 Analiza y resuelve el expediente SYN-008. Verifica la alerta de categoría bancaria GAMBLING contrastando los movimientos, la política DEMO-2 y el justificante documental disponible, y registra la acción.

@@ -19,3 +19,7 @@ When asked to create or scaffold the `erein-operational-reviewer` agent using `a
 5. **Export `app` and Prepare `05_Evaluacion` Evaluation Suite (`tests/eval/`)**:
    - Ensure `erein-operational-reviewer/app/agent.py` defines `app = App(root_agent=root_agent, name="app")` (from `google.adk.apps import App`) and `app/__init__.py` exports `from .agent import app, root_agent`.
    - Run `python3 scripts/prepare_eval_suite.py` so `erein-operational-reviewer/tests/eval/` contains the evaluation datasets built from `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/evaluacion_formador.csv` (`datasets/erein-smoke-dataset.json`, `datasets/erein-evaluacion-formador.json`), `eval_config.yaml`, `eval_cloud_config.yaml`, and `erein_ground_truth_metric.py`.
+
+6. **When Asked to Run Evaluations (`run evaluations` or `agents-cli eval`)**:
+   - First ensure `python3 scripts/prepare_eval_suite.py` has been run so `erein-operational-reviewer/tests/eval/` is populated from `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/evaluacion_formador.csv`.
+   - Run `agents-cli eval run --dataset tests/eval/datasets/erein-smoke-dataset.json --config tests/eval/eval_config.yaml --project $PROJECT_ID --region europe-west1` inside `erein-operational-reviewer/` (or `--dataset tests/eval/datasets/erein-evaluacion-formador.json` if asked for the full 10-case benchmark).
