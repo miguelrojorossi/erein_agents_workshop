@@ -56,9 +56,8 @@ flowchart LR
 | **0:00 – 0:30** | **Task 1** | Set up Cloud Workstation, Gemini Enterprise (`EREIN App`), Antigravity CLI (`agy`), and bootstrap BigQuery (`01_Datos`), Cloud Storage (`02_Documentos`), and Vertex AI RAG Engine (`03_Conocimiento`). |
 | **0:30 – 1:00** | **Task 2** | Deploy the governed `mcp-erein-operaciones` MCP Server on Cloud Run and test its 5 operational tools. |
 | **1:00 – 1:50** | **Task 3** | Build `erein-operational-reviewer` with ADK, Agents CLI, Antigravity, and a **native Vertex AI RAG Engine tool (`consultar_politica`)**, then deploy to **Agent Runtime** with **SPIFFE Agent Identity**. |
-| **1:50 – 2:45** | **Task 4** | Publish the agent to **Gemini Enterprise** and run the interactive case walkthrough (`SYN-001` direct resolution, `SYN-002` document request and session resumption, `SYN-008` PlayStation receipt vs gambling alert, `SYN-006` 15% gambling escalation, `SYN-009` multi-discrepancy). |
-| **2:45 – 3:25** | **Task 5** | Connect the MCP Server as a **Gemini Enterprise Data Store** and create a **No-Code Agent**. |
-| **3:25 – 4:00** | **Task 6** | Analyze end-to-end **Observability & Traces**, execute the automated **10-Scenario Evaluation** against `05_Evaluacion/evaluacion_formador.csv`, and review production architecture patterns. |
+| **1:50 – 3:00** | **Task 4** | Publish the agent to **Gemini Enterprise** and run the interactive case walkthrough (`SYN-001` direct resolution, `SYN-002` document request and session resumption, `SYN-008` PlayStation receipt vs gambling alert, `SYN-006` 15% gambling escalation, `SYN-009` multi-discrepancy). |
+| **3:00 – 4:00** | **Task 5** | Analyze end-to-end **Observability & Traces**, execute the automated **10-Scenario Evaluation** against `05_Evaluacion/evaluacion_formador.csv`, and review production architecture patterns. |
 
 ## Task 1.- Set up your environment and Sandbox Data
 
@@ -376,56 +375,7 @@ Realiza la revisión operativa completa del expediente SYN-009, que presenta dif
 
 - **Expected Behavior**: Simultaneously resolves both discrepancies: excludes the 400 €/month transfers from the customer's own external account (verified by ownership certificate `SYN-009-E09`, setting `ingreso_actualizado_eur_mes = 2200` per `P01 P02`) and registers the undeclared 150 €/month financial installment (verified by contract `SYN-009-E10` and monthly debits `SYN-009-E06`, `SYN-009-E08`, setting `cuota_actualizada_eur_mes = 150` per `P05`), recording state **`Resuelto`** under **`P01 P02 P05 P09`**.
 
-## Task 5.- Creating an MCP Server Datastore in Gemini Enterprise and Building a No-Code Agent
-
-In this task we will publish our MCP Server (`mcp-erein-operaciones`) as a tool connector in Gemini Enterprise and build a **No-Code Agent** directly in the Gemini Enterprise Agent Builder.
-
-1. Register the MCP Server as a Connected Data Store:
-   1. Go to the [Gemini Enterprise Applications console](https://console.cloud.google.com/gemini-enterprise/apps) and click on your **EREIN App**.
-   2. On the left panel click on **Connected data stores** -> **New data store**.
-   3. Under **Custom MCP Server**, click on **Add MCP Server**.
-   4. Select **No authentication** and enter your `MCP_URL` (`https://YOUR_SERVICE_URL.run.app/mcp`).
-   5. Click **Continue**, enter "**MCP Operaciones EREIN**" as your Data connector name, and click **Create**.
-   6. Click on **Actions** -> **Reload custom actions**, select the 5 operational tools (`consultar_expediente`, `leer_documento`, `consultar_transacciones`, `consultar_historial_laboral`, `registrar_accion_expediente`), and click **Enable actions**.
-
-2. Create the No-Code Chat Agent in Gemini Enterprise:
-   1. Open your Gemini Enterprise Web App (`https://vertexaisearch.cloud.google.com/...`), click on **Agents** -> **New agent** -> **Chat Agent** -> **Build manually**.
-   2. Click on **My Agent**, name it "**Agente Revisor Operativo No-Code**", and set the description to "**Agente No-Code para revisión operativa de expedientes de financiación (DEMO-2)**".
-   3. Paste the system instructions from `erein_agent_reference/prompts/task6_nocode_instructions.txt`:
-
-```markdown
-Eres el Agente de Revisión Operativa de Operaciones de Activo de EREIN.
-Tu misión es realizar la revisión operativa de solicitudes de financiación (expedientes SYN-001 a SYN-010) previa a la sanción de Riesgos, aplicando la Política y Procedimiento DEMO-2.
-
-1. FECHA SIMULADA Y LÍMITES DE AUTORIDAD (REGLA P09)
-- Fecha simulada fija del ejercicio: 14/10/2026.
-- Periodo bancario simulado: julio a septiembre de 2026 (2026-07-01 a 2026-09-30).
-- NUNCA apruebes, concedas ni deniegues el préstamo, ni etiquetes un expediente como "No elegible".
-- Estados permitidos exclusivamente: "En revisión", "Pendiente de evidencia", "Escalado a Operaciones", "Resuelto", "Cerrado por evidencia incompleta".
-
-2. FLUJO DE REVISIÓN Y HERRAMIENTAS MCP
-1. Llama siempre primero a `consultar_expediente(caso_id)` para obtener los datos declarados, las evidencias iniciales, los documentos vinculados y las acciones previas.
-2. Lee los documentos PDF disponibles mediante `leer_documento(caso_id, documento_id)` para verificar los importes de nómina (ocultos en la tabla de evidencias), contratos, certificados o tickets de compra, citando siempre el `documento_id` y la página.
-3. Llama a `consultar_transacciones(caso_id, "2026-07-01", "2026-09-30")` para contrastar los abonos de nómina, pagos no recurrentes (bonus o transferencias propias), cargos de préstamos, abonos de alquiler o alertas de categoría GAMBLING, así como los saldos e incidencias mensuales.
-4. Llama a `consultar_historial_laboral(caso_id)` cuando exista cambio de empleador o revisión de antigüedad reconocida (ej. SYN-004).
-5. Aplica las reglas DEMO-2 (P01 a P13) y registra obligatoriamente el resultado llamando a `registrar_accion_expediente` con un `accion_id` único (ej. ACC-SYN-001-01), el estado permitido, los IDs de evidencias y documentos, las reglas P01–P13 aplicadas y la justificación detallada.
-
-3. REGLAS DE LA POLÍTICA DEMO-2
-- P01 y P02: Dos nóminas recientes y sus abonos coincidentes acreditan ingreso recurrente estable. Excluir bonus extraordinarios (SYN-001 -> ingreso 2100 EUR) y transferencias entre cuentas propias (SYN-009 -> ingreso 2200 EUR).
-- P03: Si el nuevo salario aún no cumple P01 (SYN-002 tras recibir la nómina de septiembre de 2500 EUR frente a 2100 EUR en agosto), escalar a Operaciones ("Escalado a Operaciones").
-- P05: Contrato financiero vigente y cargos coincidentes acreditan la cuota mensual (SYN-005 -> cuota 180 EUR; SYN-009 -> cuota 150 EUR).
-- P06: El PDF original legible prevalece sobre una extracción automática errónea (SYN-003 -> corregir de 22000 a 2200 EUR citando DOC-SYN-003-E04 pág. 1).
-- P07, P10 y P13: Si un ticket coherente acredita compra comercial (SYN-008: consola PlayStation 5 por 499 EUR, ref TX-SYN-008-09-GAME en DOC-SYN-008-E06), descartar la alerta y resolver ("Resuelto", ingreso 2300 EUR). Si son apuestas reales recurrentes (SYN-006: 450 EUR/mes sobre nómina de 3000 EUR = 15% mensual y trimestral, con 0 incidencias), registrar el contexto y escalar ("Escalado a Operaciones", ingreso 3000 EUR).
-- P08: Si falta un documento imprescindible (SYN-002 fase inicial), pasar a "Pendiente de evidencia". Tras 10 días desde la solicitud con recordatorios a los días 3 y 7 sin copia legible (SYN-010: solicitud 03/10/2026, evaluación 14/10/2026), cerrar como "Cerrado por evidencia incompleta".
-- P11: Contrato vigente y tres abonos de 700 EUR/mes (SYN-007) acreditan renta bruta observada. Mantener ingreso salarial en 2000 EUR, registrar `renta_bruta_observada_eur_mes = 700` por separado y escalar ("Escalado a Operaciones").
-- P12: En SYN-004, contrastar historial laboral continuo en Grupo Norte Demo (`DOC-SYN-004-E05`) y certificado de continuidad (`DOC-SYN-004-E06`) para conservar `antiguedad_reconocida_desde = "2021-10-01"` y resolver ("Resuelto", ingreso 2300 EUR).
-```
-
-   4. In **Model**, select **Gemini 2.5 Flash** (or **3.8 Flash**).
-   5. In **Connectors**, remove Google Search and select only "**MCP Operaciones EREIN**".
-   6. Click **Create** and then **Chat with Agent** to test cases `SYN-003`, `SYN-004`, `SYN-005`, `SYN-007`, and `SYN-010`.
-
-## Task 6.- Observability, End-to-End Tracing, Automated 10-Case Evaluation & Architecture Q&A
+## Task 5.- Observability, End-to-End Tracing, Automated 10-Case Evaluation & Architecture Q&A
 
 In the final task of the workshop, we cover **end-to-end observability**, **automated evaluation across all 10 synthetic cases**, and **enterprise governance patterns**.
 
