@@ -13,8 +13,12 @@ When asked to create or scaffold the `erein-operational-reviewer` agent using `a
      os.environ["GOOGLE_API_USE_MTLS_ENDPOINT"] = "never"
      ```
 
-2. **Bake Environment Defaults for Agent Runtime Deployment**:
+2. **Do NOT Hardcode Policy or Procedure in Agent Instructions**:
+   - **Never** paste or summarize the Policy rules (`P01`–`P13`), the Operational Procedure (`DEMO-2` states, deadlines, authority limits), or case-specific answers (`SYN-001`–`SYN-010`) into the agent's `instruction` / system prompt.
+   - Instead, instruct the agent (as in `erein_agent_reference/app/agent.py`) that it does **not** have the Policy or Procedure in its prompt and **must always call `consultar_politica` first** to retrieve both the Policy and Procedure dynamically from Vertex AI RAG Engine.
+
+3. **Bake Environment Defaults for Agent Runtime Deployment**:
    - Read the current values of `$MCP_URL`, `$RAG_CORPUS_NAME`, and `$PROJECT_ID` from the shell environment or `.env.workshop` and use them as the fallback defaults in `os.environ.get(...)` inside `erein-operational-reviewer/app/agent.py` and `erein-operational-reviewer/app/rag_tool.py` so the deployed Agent Runtime container connects to the attendee's Cloud Run MCP server and `europe-west4` RAG corpus out of the box.
 
-3. **Dependencies (`pyproject.toml` / `requirements.txt`)**:
+4. **Dependencies (`pyproject.toml` / `requirements.txt`)**:
    - Ensure `google-cloud-aiplatform>=1.70.0` and `pypdf>=5.0.0` are included in the agent's dependencies alongside `google-adk`.
