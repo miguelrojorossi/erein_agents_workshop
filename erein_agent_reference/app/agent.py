@@ -7,6 +7,7 @@ Combines:
 
 import os
 from google.adk.agents import Agent
+from google.adk.apps import App
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, StreamableHTTPConnectionParams
 try:
     from .rag_tool import consultar_politica
@@ -59,3 +60,5 @@ root_agent = Agent(
         mcp_operaciones_toolset,
     ],
 )
+
+app = App(root_agent=root_agent, name="app")

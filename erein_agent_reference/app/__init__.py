@@ -1,6 +1,7 @@
 try:
-    from .agent import root_agent
+    from .agent import app, root_agent
 except ImportError:
+    app = None
     root_agent = None
 
-__all__ = ["root_agent"]
+__all__ = ["app", "root_agent"]
