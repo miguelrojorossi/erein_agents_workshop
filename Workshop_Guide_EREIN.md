@@ -257,11 +257,15 @@ You will see the agent:
 - Call `consultar_transacciones("SYN-001")` to confirm the 400 € payment is an extraordinary bonus (`BONUS`).
 - Call `registrar_accion_expediente` setting state to **`Resuelto`**, updating `ingreso_actualizado_eur_mes = 2100`, and citing `P01 P02 P09` (`version_politica = "DEMO-2"`).
 
-5. Now deploy the agent to **Agent Runtime** with **SPIFFE Agent Identity**:
+5. Now deploy the agent to **Agent Runtime** with **SPIFFE Agent Identity** and full OpenTelemetry trace/message content capture enabled:
 
 ```bash
 agents-cli scaffold enhance --deployment-target agent_runtime
-agents-cli deploy --project $PROJECT_ID --region europe-west1 --agent-identity
+agents-cli deploy \
+  --project $PROJECT_ID \
+  --region europe-west1 \
+  --agent-identity \
+  --update-env-vars "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true,GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true"
 ```
 
 The deployment takes a few minutes to complete. After it finishes, the CLI outputs a confirmation message and a link to your agent's playground in the Google Cloud Console.
