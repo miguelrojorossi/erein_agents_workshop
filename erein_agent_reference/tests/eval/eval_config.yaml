@@ -1,0 +1,9 @@
+metrics_to_run:
+  - multi_turn_task_success
+  - multi_turn_trajectory_quality
+  - multi_turn_tool_use_quality
+  - erein_formador_ground_truth
+
+custom_metrics:
+  - name: erein_formador_ground_truth
+    custom_function_file: erein_ground_truth_metric.py

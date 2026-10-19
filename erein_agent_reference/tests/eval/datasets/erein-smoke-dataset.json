@@ -1,0 +1,66 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "SYN-001",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa íntegramente el expediente SYN-001, consulta la política y procedimiento aplicable en Vertex AI RAG Engine, contrasta los documentos PDF y datos del expediente, registra la acción operativa correspondiente y emite el dictamen estructurado citando las reglas DEMO-2 aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-001\nEstado operativo esperado: Resuelto\nIngreso neto mensual computable esperado (EUR/mes): 2100\nCuota mensual no declarada esperada (EUR/mes): N/A\nAcción esperada: Excluir bonus y corregir ingreso\nReglas DEMO-2 aplicables: P01 P02 P09\nJustificación de referencia: Nóminas de agosto (DOC-SYN-001-E02, pág. 1) y septiembre (DOC-SYN-001-E04, pág. 1) y abonos bancarios acreditan ingreso neto recurrente de 2100 EUR/mes (P01). Se excluye el bonus extraordinario no recurrente de 400 EUR (SYN-001-E05, SYN-001-E06) según P02."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-001",
+      "expected_state": "Resuelto",
+      "expected_income_eur_mes": 2100.0,
+      "expected_installment_eur_mes": null,
+      "expected_action": "Excluir bonus y corregir ingreso",
+      "expected_rules": [
+        "P01",
+        "P02",
+        "P09"
+      ]
+    },
+    {
+      "eval_case_id": "SYN-003",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa íntegramente el expediente SYN-003, consulta la política y procedimiento aplicable en Vertex AI RAG Engine, contrasta los documentos PDF y datos del expediente, registra la acción operativa correspondiente y emite el dictamen estructurado citando las reglas DEMO-2 aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-003\nEstado operativo esperado: Resuelto\nIngreso neto mensual computable esperado (EUR/mes): 2200\nCuota mensual no declarada esperada (EUR/mes): N/A\nAcción esperada: Corregir extracción de 22000 a 2200 citando texto original\nReglas DEMO-2 aplicables: P01 P06 P09\nJustificación de referencia: Se corrige la extracción automática errónea de 22000 EUR (SYN-003-E05) a 2200 EUR/mes prevaleciendo el documento PDF original legible DOC-SYN-003-E04 (pág. 1: 'Neto ordinario a percibir EUR 2200') y DOC-SYN-003-E02 (pág. 1), coincidentes con los abonos bancarios de 2200 EUR (P01, P06)."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-003",
+      "expected_state": "Resuelto",
+      "expected_income_eur_mes": 2200.0,
+      "expected_installment_eur_mes": null,
+      "expected_action": "Corregir extracción de 22000 a 2200 citando texto original",
+      "expected_rules": [
+        "P01",
+        "P06",
+        "P09"
+      ]
+    }
+  ]
+}

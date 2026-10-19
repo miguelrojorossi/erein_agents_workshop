@@ -1,0 +1,32 @@
+metrics_to_run:
+  - multi_turn_task_success
+  - multi_turn_trajectory_quality
+  - multi_turn_tool_use_quality
+  - erein_demo2_policy_rubric
+
+custom_metrics:
+  - name: erein_demo2_policy_rubric
+    prompt_template: |
+      Evalúa del 1 al 5 si el dictamen y las acciones registradas por el agente de revisión operativa de EREIN cumplen exactamente con el resultado esperado en 05_Evaluacion/evaluacion_formador.csv.
+
+      Solicitud del usuario:
+      {prompt}
+
+      Referencia oficial del formador (05_Evaluacion/evaluacion_formador.csv):
+      {reference}
+
+      Respuesta final del agente:
+      {response}
+
+      Traza completa de herramientas invocadas (RAG y MCP):
+      {agent_data}
+
+      Criterios de evaluación (DEMO-2):
+      1. El agente consultó la política y el procedimiento en Vertex AI RAG Engine (`consultar_politica`) y el expediente en MCP (`consultar_expediente`).
+      2. El estado operativo registrado en `registrar_accion_expediente` coincide con el Estado operativo esperado de la referencia.
+      3. El ingreso neto mensual computable y la cuota mensual no declarada coinciden con la referencia.
+      4. Cita las reglas DEMO-2 esperadas (P01-P13) y respeta los límites de autoridad (P09: nunca declara 'No elegible' ni aprueba/rechaza crédito).
+
+      Devuelve exclusivamente JSON con el formato:
+      {"score": <1|2|3|4|5>, "explanation": "<justificación detallada>"}
+    judge_model_sampling_count: 1

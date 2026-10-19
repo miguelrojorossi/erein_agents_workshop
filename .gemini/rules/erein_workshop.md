@@ -15,3 +15,7 @@ When asked to create or scaffold the `erein-operational-reviewer` agent using `a
 
 4. **Dependencies (`pyproject.toml`)**:
    - **Do NOT** add a duplicate `google-cloud-aiplatform` line to `pyproject.toml` if `google-cloud-aiplatform` (such as `google-cloud-aiplatform[evaluation,agent-engines]>=...`) is already present, as duplicate entries break `uv add` during `agents-cli scaffold enhance`. Only add `pypdf>=5.0.0` if it is not already listed.
+
+5. **Export `app` and Prepare `05_Evaluacion` Evaluation Suite (`tests/eval/`)**:
+   - Ensure `erein-operational-reviewer/app/agent.py` defines `app = App(root_agent=root_agent, name="app")` (from `google.adk.apps import App`) and `app/__init__.py` exports `from .agent import app, root_agent`.
+   - Run `python3 scripts/prepare_eval_suite.py` so `erein-operational-reviewer/tests/eval/` contains the evaluation datasets built from `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/evaluacion_formador.csv` (`datasets/erein-smoke-dataset.json`, `datasets/erein-evaluacion-formador.json`), `eval_config.yaml`, `eval_cloud_config.yaml`, and `erein_ground_truth_metric.py`.

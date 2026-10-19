@@ -1,0 +1,316 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "SYN-001",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa íntegramente el expediente SYN-001, consulta la política y procedimiento aplicable en Vertex AI RAG Engine, contrasta los documentos PDF y datos del expediente, registra la acción operativa correspondiente y emite el dictamen estructurado citando las reglas DEMO-2 aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-001\nEstado operativo esperado: Resuelto\nIngreso neto mensual computable esperado (EUR/mes): 2100\nCuota mensual no declarada esperada (EUR/mes): N/A\nAcción esperada: Excluir bonus y corregir ingreso\nReglas DEMO-2 aplicables: P01 P02 P09\nJustificación de referencia: Nóminas de agosto (DOC-SYN-001-E02, pág. 1) y septiembre (DOC-SYN-001-E04, pág. 1) y abonos bancarios acreditan ingreso neto recurrente de 2100 EUR/mes (P01). Se excluye el bonus extraordinario no recurrente de 400 EUR (SYN-001-E05, SYN-001-E06) según P02."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-001",
+      "expected_state": "Resuelto",
+      "expected_income_eur_mes": 2100.0,
+      "expected_installment_eur_mes": null,
+      "expected_action": "Excluir bonus y corregir ingreso",
+      "expected_rules": [
+        "P01",
+        "P02",
+        "P09"
+      ]
+    },
+    {
+      "eval_case_id": "SYN-002",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa el expediente SYN-002. Primero verifica si falta la nómina de septiembre (solicítala dejando constancia en Pendiente de evidencia si aún no se ha incorporado la respuesta simulada); a continuación incorpora la respuesta simulada del cliente (incorporar_respuesta_simulada para SYN-002), analiza la nueva nómina DOC-SYN-002-E05 conforme a la política DEMO-2 consultada en Vertex AI RAG Engine y registra la acción operativa final citando las reglas aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-002\nEstado operativo esperado: Pendiente de evidencia\nIngreso neto mensual computable esperado (EUR/mes): N/A (sin cambio / escalado)\nCuota mensual no declarada esperada (EUR/mes): N/A\nAcción esperada: Pedir nómina septiembre. Tras respuesta simulada, escalar nuevo salario por P03.\nReglas DEMO-2 aplicables: P01 P03 P09\nJustificación de referencia: Tras incorporar la respuesta simulada (SYN-002-E05, DOC-SYN-002-E05 pág. 1: neto ordinario 2500 EUR), el nuevo salario de 2500 EUR solo cuenta con una nómina (septiembre) frente a 2100 EUR en agosto, por lo que no cumple las dos nóminas recientes de P01. Se escala el cálculo a Operaciones según P03."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-002",
+      "expected_state": "Pendiente de evidencia",
+      "expected_income_eur_mes": null,
+      "expected_installment_eur_mes": null,
+      "expected_action": "Pedir nómina septiembre. Tras respuesta simulada, escalar nuevo salario por P03.",
+      "expected_rules": [
+        "P01",
+        "P03",
+        "P09"
+      ]
+    },
+    {
+      "eval_case_id": "SYN-003",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa íntegramente el expediente SYN-003, consulta la política y procedimiento aplicable en Vertex AI RAG Engine, contrasta los documentos PDF y datos del expediente, registra la acción operativa correspondiente y emite el dictamen estructurado citando las reglas DEMO-2 aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-003\nEstado operativo esperado: Resuelto\nIngreso neto mensual computable esperado (EUR/mes): 2200\nCuota mensual no declarada esperada (EUR/mes): N/A\nAcción esperada: Corregir extracción de 22000 a 2200 citando texto original\nReglas DEMO-2 aplicables: P01 P06 P09\nJustificación de referencia: Se corrige la extracción automática errónea de 22000 EUR (SYN-003-E05) a 2200 EUR/mes prevaleciendo el documento PDF original legible DOC-SYN-003-E04 (pág. 1: 'Neto ordinario a percibir EUR 2200') y DOC-SYN-003-E02 (pág. 1), coincidentes con los abonos bancarios de 2200 EUR (P01, P06)."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-003",
+      "expected_state": "Resuelto",
+      "expected_income_eur_mes": 2200.0,
+      "expected_installment_eur_mes": null,
+      "expected_action": "Corregir extracción de 22000 a 2200 citando texto original",
+      "expected_rules": [
+        "P01",
+        "P06",
+        "P09"
+      ]
+    },
+    {
+      "eval_case_id": "SYN-004",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa íntegramente el expediente SYN-004, consulta la política y procedimiento aplicable en Vertex AI RAG Engine, contrasta los documentos PDF y datos del expediente, registra la acción operativa correspondiente y emite el dictamen estructurado citando las reglas DEMO-2 aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-004\nEstado operativo esperado: Resuelto\nIngreso neto mensual computable esperado (EUR/mes): 2300\nCuota mensual no declarada esperada (EUR/mes): N/A\nAcción esperada: Conservar antigüedad reconocida desde 2021-10-01. Contrastar historial y certificado; no usar solo fecha alta empresa actual.\nReglas DEMO-2 aplicables: P01 P06 P09 P12\nJustificación de referencia: Contrastado el historial laboral continuo (DOC-SYN-004-E05, pág. 1: baja en Grupo Norte Servicios Demo el 31/08/2026 y alta en Grupo Norte Digital Demo el 01/09/2026) junto con el certificado empresarial de continuidad (DOC-SYN-004-E06, pág. 1), se conserva la antigüedad reconocida desde 2021-10-01 (P12) y el ingreso recurrente de 2300 EUR/mes (P01)."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-004",
+      "expected_state": "Resuelto",
+      "expected_income_eur_mes": 2300.0,
+      "expected_installment_eur_mes": null,
+      "expected_action": "Conservar antigüedad reconocida desde 2021-10-01. Contrastar historial y certificado; no usar solo fecha alta empresa actual.",
+      "expected_rules": [
+        "P01",
+        "P06",
+        "P09",
+        "P12"
+      ]
+    },
+    {
+      "eval_case_id": "SYN-005",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa íntegramente el expediente SYN-005, consulta la política y procedimiento aplicable en Vertex AI RAG Engine, contrasta los documentos PDF y datos del expediente, registra la acción operativa correspondiente y emite el dictamen estructurado citando las reglas DEMO-2 aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-005\nEstado operativo esperado: Resuelto\nIngreso neto mensual computable esperado (EUR/mes): 2400\nCuota mensual no declarada esperada (EUR/mes): 180\nAcción esperada: Registrar cuota no declarada\nReglas DEMO-2 aplicables: P01 P05 P09\nJustificación de referencia: Ingreso recurrente acreditado en 2400 EUR/mes (DOC-SYN-005-E02 y DOC-SYN-005-E04 pág. 1, P01). El contrato financiero vigente (SYN-005-E07) y los cargos bancarios mensuales coincidentes de 180 EUR (SYN-005-E05, SYN-005-E06) acreditan una cuota mensual no declarada de 180 EUR/mes que se registra según P05."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-005",
+      "expected_state": "Resuelto",
+      "expected_income_eur_mes": 2400.0,
+      "expected_installment_eur_mes": 180.0,
+      "expected_action": "Registrar cuota no declarada",
+      "expected_rules": [
+        "P01",
+        "P05",
+        "P09"
+      ]
+    },
+    {
+      "eval_case_id": "SYN-006",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa íntegramente el expediente SYN-006, consulta la política y procedimiento aplicable en Vertex AI RAG Engine, contrasta los documentos PDF y datos del expediente, registra la acción operativa correspondiente y emite el dictamen estructurado citando las reglas DEMO-2 aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-006\nEstado operativo esperado: Escalado a Operaciones\nIngreso neto mensual computable esperado (EUR/mes): 3000\nCuota mensual no declarada esperada (EUR/mes): N/A\nAcción esperada: Apuestas 450/3000 = 15% cada mes; 1350/9000 = 15% trimestre. Sin incidencias en el periodo. Escalar sin rechazo automático.\nReglas DEMO-2 aplicables: P01 P07 P09 P13\nJustificación de referencia: Nómina neta verificada en 3000 EUR/mes (DOC-SYN-006-E02 y DOC-SYN-006-E04 pág. 1, P01). Se observan pagos reales recurrentes de apuestas de 450 EUR/mes en julio, agosto y septiembre (450 / 3000 = 15% cada mes; 1350 / 9000 = 15% en el trimestre). El periodo presenta saldos positivos y 0 descubiertos, devoluciones o impagos (SYN-006-E06). Conforme a P07 y P13, la ausencia de incidencias no autoriza a cerrar la alerta ni implica rechazo automático: se escala a Operaciones con el contexto completo."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-006",
+      "expected_state": "Escalado a Operaciones",
+      "expected_income_eur_mes": 3000.0,
+      "expected_installment_eur_mes": null,
+      "expected_action": "Apuestas 450/3000 = 15% cada mes; 1350/9000 = 15% trimestre. Sin incidencias en el periodo. Escalar sin rechazo automático.",
+      "expected_rules": [
+        "P01",
+        "P07",
+        "P09",
+        "P13"
+      ]
+    },
+    {
+      "eval_case_id": "SYN-007",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa íntegramente el expediente SYN-007, consulta la política y procedimiento aplicable en Vertex AI RAG Engine, contrasta los documentos PDF y datos del expediente, registra la acción operativa correspondiente y emite el dictamen estructurado citando las reglas DEMO-2 aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-007\nEstado operativo esperado: Escalado a Operaciones\nIngreso neto mensual computable esperado (EUR/mes): 2000\nCuota mensual no declarada esperada (EUR/mes): N/A\nAcción esperada: Salario 2000; renta bruta observada 700/mes. No sumar 700 al ingreso computable. Escalar admisibilidad del alquiler.\nReglas DEMO-2 aplicables: P01 P09 P11\nJustificación de referencia: Salario neto recurrente acreditado en 2000 EUR/mes (DOC-SYN-007-E02 y DOC-SYN-007-E04 pág. 1, P01). El contrato de alquiler vigente (DOC-SYN-007-E05, pág. 1) y los tres abonos mensuales de 700 EUR (SYN-007-E06) acreditan una renta bruta observada de 700 EUR/mes. Según P11, se registra por separado renta_bruta_observada_eur_mes = 700 sin sumarla al salario computable (2000 EUR) y se escala su admisibilidad a Operaciones."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-007",
+      "expected_state": "Escalado a Operaciones",
+      "expected_income_eur_mes": 2000.0,
+      "expected_installment_eur_mes": null,
+      "expected_action": "Salario 2000; renta bruta observada 700/mes. No sumar 700 al ingreso computable. Escalar admisibilidad del alquiler.",
+      "expected_rules": [
+        "P01",
+        "P09",
+        "P11"
+      ]
+    },
+    {
+      "eval_case_id": "SYN-008",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa íntegramente el expediente SYN-008, consulta la política y procedimiento aplicable en Vertex AI RAG Engine, contrasta los documentos PDF y datos del expediente, registra la acción operativa correspondiente y emite el dictamen estructurado citando las reglas DEMO-2 aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-008\nEstado operativo esperado: Resuelto\nIngreso neto mensual computable esperado (EUR/mes): 2300\nCuota mensual no declarada esperada (EUR/mes): N/A\nAcción esperada: Descartar alerta de apuestas: ticket PlayStation 499 EUR coincide con movimiento. Registrar reclasificación sin alterar el original.\nReglas DEMO-2 aplicables: P01 P09 P10\nJustificación de referencia: Nóminas de agosto y septiembre acreditan ingreso recurrente de 2300 EUR/mes (DOC-SYN-008-E02 y DOC-SYN-008-E04 pág. 1, P01). El justificante de compra DOC-SYN-008-E06 (pág. 1) coincide en titular (Hugo Demo), fecha (20/09/2026), importe (499.00 EUR), comercio (GAME DEMO ELECTRONICA) y referencia (TX-SYN-008-09-GAME), acreditando la compra de una consola PlayStation 5. Según P10, se descarta la alerta de apuestas registrando la reclasificación sin alterar el movimiento original."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-008",
+      "expected_state": "Resuelto",
+      "expected_income_eur_mes": 2300.0,
+      "expected_installment_eur_mes": null,
+      "expected_action": "Descartar alerta de apuestas: ticket PlayStation 499 EUR coincide con movimiento. Registrar reclasificación sin alterar el original.",
+      "expected_rules": [
+        "P01",
+        "P09",
+        "P10"
+      ]
+    },
+    {
+      "eval_case_id": "SYN-009",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa íntegramente el expediente SYN-009, consulta la política y procedimiento aplicable en Vertex AI RAG Engine, contrasta los documentos PDF y datos del expediente, registra la acción operativa correspondiente y emite el dictamen estructurado citando las reglas DEMO-2 aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-009\nEstado operativo esperado: Resuelto\nIngreso neto mensual computable esperado (EUR/mes): 2200\nCuota mensual no declarada esperada (EUR/mes): 150\nAcción esperada: Tratar conjuntamente ingreso y cuota. Excluir transferencias propias.\nReglas DEMO-2 aplicables: P01 P02 P05 P09\nJustificación de referencia: Se tratan conjuntamente las discrepancias de ingresos y obligaciones: 1) Se excluyen las transferencias desde cuenta propia de 400 EUR/mes (SYN-009-E05, SYN-009-E07, SYN-009-E09) fijando el ingreso neto recurrente en 2200 EUR/mes según nóminas DOC-SYN-009-E02 y DOC-SYN-009-E04 pág. 1 (P01, P02). 2) Se registra la cuota mensual de 150 EUR/mes acreditada por contrato financiero vigente (SYN-009-E10) y cargos bancarios (SYN-009-E06, SYN-009-E08) según P05."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-009",
+      "expected_state": "Resuelto",
+      "expected_income_eur_mes": 2200.0,
+      "expected_installment_eur_mes": 150.0,
+      "expected_action": "Tratar conjuntamente ingreso y cuota. Excluir transferencias propias.",
+      "expected_rules": [
+        "P01",
+        "P02",
+        "P05",
+        "P09"
+      ]
+    },
+    {
+      "eval_case_id": "SYN-010",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Revisa íntegramente el expediente SYN-010, consulta la política y procedimiento aplicable en Vertex AI RAG Engine, contrasta los documentos PDF y datos del expediente, registra la acción operativa correspondiente y emite el dictamen estructurado citando las reglas DEMO-2 aplicables."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Expediente: SYN-010\nEstado operativo esperado: Cerrado por evidencia incompleta\nIngreso neto mensual computable esperado (EUR/mes): N/A (sin cambio / escalado)\nCuota mensual no declarada esperada (EUR/mes): N/A\nAcción esperada: Cierre por evidencia incompleta. No etiquetar como no elegible.\nReglas DEMO-2 aplicables: P08 P09\nJustificación de referencia: La nómina de septiembre DOC-SYN-010-E04 (pág. 1) presenta el campo de importe ilegible ('[CAMPO NO LEGIBLE]'). Solicitada copia legible el 03/10/2026 (SYN-010-E05) y enviados los recordatorios a los días 3 y 7 (06/10/2026 SYN-010-E06 y 10/10/2026 SYN-010-E07), a fecha de evaluación 14/10/2026 han transcurrido 11 días (>10 días) sin respuesta. Se cierra por evidencia incompleta según P08 y P09, sin etiquetar como no elegible."
+            }
+          ]
+        }
+      },
+      "caso_id": "SYN-010",
+      "expected_state": "Cerrado por evidencia incompleta",
+      "expected_income_eur_mes": null,
+      "expected_installment_eur_mes": null,
+      "expected_action": "Cierre por evidencia incompleta. No etiquetar como no elegible.",
+      "expected_rules": [
+        "P08",
+        "P09"
+      ]
+    }
+  ]
+}

@@ -243,21 +243,28 @@ Use agents-cli to create an agent named "erein-operational-reviewer" with the fo
 
 > **Tip:** You can also inspect or copy the ready-made reference implementation in `erein_agent_reference/app/agent.py` and `erein_agent_reference/app/rag_tool.py` at any time.
 
-4. Once Antigravity finishes creating the agent, exit Antigravity with `CTRL + C` twice and test the agent locally from the terminal against scenario **`SYN-001`** (Declared income of 2,500 € vs. 2,100 € payslip + 400 € bonus):
+4. Once Antigravity finishes creating the agent, exit Antigravity with `CTRL + C` twice, test the agent interactively on **`SYN-001`**, and then run a **pre-deployment evaluation** using **`agents-cli eval`** and the ground-truth dataset from `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/evaluacion_formador.csv`:
 
 ```bash
 cd ~/labs/erein_agents_workshop/erein-operational-reviewer
+
+# 4a. Quick single-case interactive run on SYN-001 (Declared income 2,500 € vs. 2,100 € payslip + 400 € bonus)
 agents-cli run "Realiza la revisión operativa del expediente SYN-001. Consulta el expediente, la política DEMO-2 en RAG, lee las nóminas en PDF, revisa las transacciones y registra la resolución correspondiente."
+
+# 4b. Prepare the 05_Evaluacion datasets and run local evaluation with agents-cli eval
+python3 ~/labs/erein_agents_workshop/scripts/prepare_eval_suite.py
+agents-cli eval run \
+  --dataset tests/eval/datasets/erein-smoke-dataset.json \
+  --config tests/eval/eval_config.yaml \
+  --project $PROJECT_ID \
+  --region europe-west1
 ```
 
-You will see the agent:
-- Call `consultar_expediente("SYN-001")` and observe that the payslip amounts are masked.
-- Call the native ADK RAG Engine tool `consultar_politica` to retrieve rules `P01`, `P02`, and `P09`.
-- Call `leer_documento` on `DOC-SYN-001-E02` (August, p. 1: 2,100 €) and `DOC-SYN-001-E04` (September, p. 1: 2,100 €).
-- Call `consultar_transacciones("SYN-001")` to confirm the 400 € payment is an extraordinary bonus (`BONUS`).
-- Call `registrar_accion_expediente` setting state to **`Resuelto`**, updating `ingreso_actualizado_eur_mes = 2100`, and citing `P01 P02 P09` (`version_politica = "DEMO-2"`).
+You will see the agent and evaluation pipeline:
+- Call `consultar_expediente`, query Vertex AI RAG Engine via `consultar_politica` (`P01`, `P02`, `P06`, `P09`), inspect the original PDF payslips on Cloud Storage via `leer_documento`, verify bank movements via `consultar_transacciones`, and persist the operational decision via `registrar_accion_expediente`.
+- Grade the multi-turn execution traces against `05_Evaluacion/evaluacion_formador.csv` (`SYN-001` and `SYN-003`) using Vertex AI GenAI Evaluation's built-in metrics (`multi_turn_task_success`, `multi_turn_trajectory_quality`, `multi_turn_tool_use_quality`) and the custom ground-truth metric `erein_formador_ground_truth` (`tests/eval/erein_ground_truth_metric.py`), saving a detailed JSON and HTML scorecard in `artifacts/grade_results/` and updating `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/resultados_evaluacion_agente.csv`.
 
-5. Now deploy the agent to **Agent Runtime** with **SPIFFE Agent Identity** and full OpenTelemetry trace/message content capture enabled:
+5. Now deploy the agent to **Agent Runtime** with **SPIFFE Agent Identity** and full OpenTelemetry trace/message content capture enabled (required for Cloud Trace inspection and Agent Runtime Evaluations):
 
 ```bash
 agents-cli scaffold enhance --deployment-target agent_runtime
@@ -265,22 +272,24 @@ agents-cli deploy \
   --project $PROJECT_ID \
   --region europe-west1 \
   --agent-identity \
-  --update-env-vars "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true,GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true"
+  --update-env-vars "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true"
 ```
 
 The deployment takes a few minutes to complete. After it finishes, the CLI outputs a confirmation message and a link to your agent's playground in the Google Cloud Console.
 
-6. Check your agent's **SPIFFE ID (Agent Identity)** and grant it access to your Vertex AI RAG Engine corpus:
+6. Check your agent's **SPIFFE ID (Agent Identity)** and grant it access to your Vertex AI RAG Engine corpus and Cloud Trace telemetry:
     1. In the Google Cloud Console, go to the [Agent Runtime Deployments](https://console.cloud.google.com/agent-platform/runtimes) page.
     2. Find the row for `erein-operational-reviewer`, and in the **Identity** column click **Copy to clipboard**. The identity looks similar to:
        `principal://agents.global.org-ORGANIZATION_ID.system.id.goog/resources/aiplatform/projects/PROJECT_NUMBER/locations/europe-west1/reasoningEngines/ENGINE_ID`
-    3. Grant your agent's SPIFFE principal the `roles/aiplatform.user` role so it can query Vertex AI RAG Engine directly under its own cryptographic identity:
+    3. Grant your agent's SPIFFE principal `roles/aiplatform.user`, `roles/cloudtrace.agent`, and `roles/telemetry.tracesWriter` so it can query Vertex AI RAG Engine and export full OpenTelemetry traces under its own cryptographic identity:
 
 ```bash
 export AGENT_SPIFFE_ID="PASTE_YOUR_AGENT_SPIFFE_ID_HERE"
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="${AGENT_SPIFFE_ID}" \
-  --role="roles/aiplatform.user"
+for ROLE in roles/aiplatform.user roles/cloudtrace.agent roles/telemetry.tracesWriter; do
+  gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="${AGENT_SPIFFE_ID}" \
+    --role="${ROLE}"
+done
 ```
 
 7. Browse to [Agent Runtime](https://console.cloud.google.com/agent-platform/runtimes) in the Google Cloud Console, click on the **`erein-operational-reviewer`** agent, and test it in the **Playground** using scenario **`SYN-008`** (False positive gambling alert for a PlayStation 5 purchase):
@@ -390,16 +399,75 @@ In the final task of the workshop, we cover **end-to-end observability**, **auto
     - Inspect the **Cloud Trace** waterfall for any case review turn: you can see the exact latency and payload of each reasoning step, the native **Vertex AI RAG Engine** retrieval (`consultar_politica`), and each **MCP tool invocation** (`consultar_expediente`, `leer_documento`, `consultar_transacciones`, `registrar_accion_expediente`).
     - Review **Token Usage, Error Rates, and Latency Metrics** in the Monitoring dashboard to track operational cost per reviewed dossier.
 
-### 2. Running Automated Quality Evaluation Across All 10 Scenarios (`05_Evaluacion`)
+### 2. Running Evaluations in Agent Runtime & Full 10-Case `05_Evaluacion` Benchmark
 
-Run the automated evaluation script in your Cloud Workstation terminal to execute and verify all 10 synthetic cases (`SYN-001` through `SYN-010`, including both phases of `SYN-002`) against the trainer's ground truth in `05_Evaluacion/evaluacion_formador.csv`:
+We will evaluate the agent's operational quality using both **Agent Runtime's native Evaluation UI** (on captured production traces/sessions) and **`agents-cli eval`** against EREIN's 10-case ground-truth dataset in `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/evaluacion_formador.csv`.
+
+#### Part A: Evaluating Traces & Configuring Online Monitoring in Agent Runtime (Console UI)
+
+Because you deployed `erein-operational-reviewer` with `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT` and `ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true`, Agent Runtime captures full prompt, tool-call, and response spans for offline and online evaluation:
+
+1. **Evaluate an Individual Execution Trace in Agent Runtime**:
+   1. In the [Agent Runtime page](https://console.cloud.google.com/agent-platform/runtimes), click on **`erein-operational-reviewer`** and open the **Traces** tab.
+   2. Click on any trace from your Task 4 case reviews (`SYN-001`, `SYN-002`, `SYN-006`, `SYN-008`, `SYN-009`) to open the trace waterfall.
+   3. In the trace details panel, select the **Evaluation** tab and click **Run evaluation**.
+   4. Select the built-in multi-turn agent metrics (**Task Success**, **Trajectory Quality**, **Tool Use Quality**, **Safety**) and run the evaluation to inspect the LLM-judge scores and step-by-step rubric explanations directly on the trace.
+2. **Run a Batch Offline Evaluation & Set Up Online Monitoring**:
+   1. Open [Agent Platform > Evaluation](https://console.cloud.google.com/agent-platform/agent-evaluation) in the Google Cloud Console.
+   2. **Offline Evaluation (`Evaluations` tab -> `New evaluation`)**:
+      - Select **`erein-operational-reviewer`** as the target agent.
+      - Filter the recorded sessions/traces captured in Cloud Trace, select **Task Success (`multi_turn_task_success`)**, **Trajectory Quality (`multi_turn_trajectory_quality`)**, and **Tool Use Quality (`multi_turn_tool_use_quality`)**, set the Cloud Storage destination to `gs://${PROJECT_ID}-erein-docs/eval-results`, and launch the batch evaluation.
+   3. **Online Monitoring (`Online monitoring` tab -> `Create monitor`)**:
+      - Select **`erein-operational-reviewer`**, set the sampling rate (e.g., `100%` for workshop testing), and select the quality metrics so Agent Runtime continuously evaluates live conversations from Gemini Enterprise.
+
+#### Part B: Running the Full 10-Case `05_Evaluacion` Benchmark with `agents-cli eval`
+
+The folder `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/` provides three evaluation artifacts:
+- `evaluacion_formador.csv`: Ground-truth expectations for all 10 synthetic cases (`SYN-001` through `SYN-010`: `estado_esperado`, `ingreso_esperado_eur_mes`, `cuota_esperada_eur_mes`, `accion_esperada`, `reglas`).
+- `evaluacion_formador.schema.json`: BigQuery / structured schema for the trainer evaluation table.
+- `resultados_evaluacion_agente.csv`: Output scorecard populated with the agent's recorded state, updated income/installments, compliance verdict (`SI`/`NO`), and detailed observations.
+
+1. **Run the full 10-case `05_Evaluacion` benchmark with `agents-cli eval run`**:
+
+```bash
+cd ~/labs/erein_agents_workshop/erein-operational-reviewer
+python3 ~/labs/erein_agents_workshop/scripts/prepare_eval_suite.py
+agents-cli eval run \
+  --dataset tests/eval/datasets/erein-evaluacion-formador.json \
+  --config tests/eval/eval_config.yaml \
+  --project $PROJECT_ID \
+  --region europe-west1
+```
+
+This command runs all 10 cases (`SYN-001`–`SYN-010`), scores every multi-turn trace with Vertex AI GenAI Evaluation (`multi_turn_task_success`, `multi_turn_trajectory_quality`, `multi_turn_tool_use_quality`) plus the custom ground-truth metric `erein_formador_ground_truth` (`tests/eval/erein_ground_truth_metric.py`), saves an interactive HTML and JSON report in `artifacts/grade_results/`, and writes the completed scorecard to `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/resultados_evaluacion_agente.csv`.
+
+2. **Submit a Managed Cloud Evaluation Job to Agent Runtime (`agents-cli eval submit`)**:
+
+To run both inference and grading asynchronously on your deployed **Agent Runtime** instance in Google Cloud (storing results in Cloud Storage and viewing them in the Agent Platform Evaluation UI):
+
+```bash
+export ENGINE_RESOURCE_NAME="PASTE_YOUR_REASONING_ENGINE_RESOURCE_NAME"
+agents-cli eval submit \
+  --dataset tests/eval/datasets/erein-evaluacion-formador.json \
+  --config tests/eval/eval_cloud_config.yaml \
+  --resource-name "${ENGINE_RESOURCE_NAME}" \
+  --dest "gs://${PROJECT_ID}-erein-docs/eval-results" \
+  --project $PROJECT_ID \
+  --region europe-west1
+```
+
+You can poll and download the cloud evaluation run results at any time with:
+
+```bash
+agents-cli eval results --run-id <RUN_RESOURCE_NAME>
+```
+
+3. **(Optional) Verify BigQuery `acciones` persistence across all 10 cases**:
 
 ```bash
 cd ~/labs/erein_agents_workshop
 python3 scripts/evaluate_agent.py --verify-ground-truth
 ```
-
-The evaluation script checks all 8 acceptance criteria from `Guia_Implementacion_PoC.pdf` (*Resultado operativo, Fundamento, Uso de herramientas, Interacción mínima, Autoridad, Continuidad, Aislamiento, Escrituras*) and generates the completed report at `EREIN_CdU_Revision_Operativa_Agentica/05_Evaluacion/resultados_evaluacion_agente.csv`:
 
 | Case ID | Expected State (`evaluacion_formador.csv`) | Expected Income (€/mo) | Expected Installment (€/mo) | Applied Rules (`DEMO-2`) | Key Operational Verification |
 | :--- | :--- | :--- | :--- | :--- | :--- |
