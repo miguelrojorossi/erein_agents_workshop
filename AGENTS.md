@@ -20,5 +20,5 @@ When asked to create or scaffold the `erein-operational-reviewer` agent using `a
 3. **Bake Environment Defaults for Agent Runtime Deployment**:
    - Read the current values of `$MCP_URL`, `$RAG_CORPUS_NAME`, and `$PROJECT_ID` from the shell environment or `.env.workshop` and use them as the fallback defaults in `os.environ.get(...)` inside `erein-operational-reviewer/app/agent.py` and `erein-operational-reviewer/app/rag_tool.py` so the deployed Agent Runtime container connects to the attendee's Cloud Run MCP server and `europe-west4` RAG corpus out of the box.
 
-4. **Dependencies (`pyproject.toml` / `requirements.txt`)**:
-   - Ensure `google-cloud-aiplatform>=1.70.0` and `pypdf>=5.0.0` are included in the agent's dependencies alongside `google-adk`.
+4. **Dependencies (`pyproject.toml`)**:
+   - **Do NOT** add a duplicate `google-cloud-aiplatform` line to `pyproject.toml` if `google-cloud-aiplatform` (such as `google-cloud-aiplatform[evaluation,agent-engines]>=...`) is already present, as duplicate entries break `uv add` during `agents-cli scaffold enhance`. Only add `pypdf>=5.0.0` if it is not already listed.
