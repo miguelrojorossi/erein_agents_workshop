@@ -16,7 +16,10 @@ os.environ["GOOGLE_API_USE_MTLS_ENDPOINT"] = "never"
 
 from google.adk.agents import Agent
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, StreamableHTTPConnectionParams
-from .rag_tool import consultar_politica
+try:
+    from .rag_tool import consultar_politica
+except ImportError:
+    from rag_tool import consultar_politica
 
 MCP_URL = os.environ.get("MCP_URL", "http://localhost:8080/mcp")
 

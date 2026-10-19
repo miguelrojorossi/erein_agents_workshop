@@ -103,6 +103,15 @@ def consultar_politica(consulta: str) -> str:
     rag_corpus = os.getenv("RAG_CORPUS_NAME") or DEFAULT_RAG_CORPUS_NAME
     use_local = os.getenv("USE_LOCAL_DATA", "").lower() in ("true", "1", "yes")
 
+    if not project_id and not use_local:
+        try:
+            import google.auth
+            _, detected_project = google.auth.default()
+            if detected_project:
+                project_id = detected_project
+        except Exception:
+            pass
+
     if project_id and not use_local:
         try:
             import vertexai
