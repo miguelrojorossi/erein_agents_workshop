@@ -56,10 +56,9 @@ flowchart LR
 | **0:00 – 0:30** | **Task 1** | Set up Cloud Workstation, Gemini Enterprise (`EREIN App`), Antigravity CLI (`agy`), and bootstrap BigQuery (`01_Datos`), Cloud Storage (`02_Documentos`), and Vertex AI RAG Engine (`03_Conocimiento`). |
 | **0:30 – 1:00** | **Task 2** | Deploy the governed `mcp-erein-operaciones` MCP Server on Cloud Run and test its 5 operational tools. |
 | **1:00 – 1:50** | **Task 3** | Build `erein-operational-reviewer` with ADK, Agents CLI, Antigravity, and a **native Vertex AI RAG Engine tool (`consultar_politica`)**, then deploy to **Agent Runtime** with **SPIFFE Agent Identity**. |
-| **1:50 – 2:35** | **Task 4** | Lock down the MCP Server (`--ingress=internal`), connect it privately via **Agent Gateway (PSC Egress)**, and configure **Model Armor** guardrails. |
-| **2:35 – 3:10** | **Task 5** | Publish the agent to **Gemini Enterprise** and run the interactive case walkthrough (`SYN-001` direct resolution, `SYN-002` document request and session resumption, `SYN-008` PlayStation receipt vs gambling alert, `SYN-006` 15% gambling escalation, `SYN-009` multi-discrepancy). |
-| **3:10 – 3:35** | **Task 6** | Expose the MCP Server (`--ingress=all`), connect it as a **Gemini Enterprise Data Store**, and create a **No-Code Agent**. |
-| **3:35 – 4:00** | **Task 7** | Analyze end-to-end **Observability & Traces**, execute the automated **10-Scenario Evaluation** against `05_Evaluacion/evaluacion_formador.csv`, and review production architecture patterns. |
+| **1:50 – 2:45** | **Task 4** | Publish the agent to **Gemini Enterprise** and run the interactive case walkthrough (`SYN-001` direct resolution, `SYN-002` document request and session resumption, `SYN-008` PlayStation receipt vs gambling alert, `SYN-006` 15% gambling escalation, `SYN-009` multi-discrepancy). |
+| **2:45 – 3:25** | **Task 5** | Connect the MCP Server as a **Gemini Enterprise Data Store** and create a **No-Code Agent**. |
+| **3:25 – 4:00** | **Task 6** | Analyze end-to-end **Observability & Traces**, execute the automated **10-Scenario Evaluation** against `05_Evaluacion/evaluacion_formador.csv`, and review production architecture patterns. |
 
 ## Task 1.- Set up your environment and Sandbox Data
 
@@ -289,181 +288,7 @@ Analiza y resuelve el expediente SYN-008. Verifica la alerta de categoría banca
 
 You will see the agent invoke the Vertex AI RAG Engine tool (`consultar_politica`), inspect `DOC-SYN-008-E06` (page 1: PlayStation 5 console at `GAME DEMO ELECTRONICA` for `499.00 EUR`, ref `TX-SYN-008-09-GAME`), discard the false-positive gambling alert under rule **`P10`** without overwriting the original transaction category, and record **`Resuelto`** (`ingreso_actualizado_eur_mes = 2300`).
 
-## Task 4.- Connecting to a Private MCP Server using Agent Gateway and Model Armor
-
-In a regulated financial institution like EREIN, operational microservices and BigQuery/GCS data access layers must never be exposed to the public internet. In this task we will:
-1. Lock down the Cloud Run MCP Server to **internal VPC ingress only** (`--ingress=internal`).
-2. Provision an **Agent Gateway** (`AGENT_TO_ANYWHERE` egress mode) using a **Private Service Connect (PSC) Network Attachment** to bridge Agent Runtime privately into your VPC.
-3. Configure **Model Armor** security guardrails to protect the agent against prompt injection, jailbreaks, and sensitive data leakage.
-
-1. Redeploy the MCP server on Cloud Run changing `--ingress` to `internal`:
-
-```bash
-cd ~/labs/erein_agents_workshop/mcp_erein_operaciones
-gcloud beta run deploy mcp-erein-operaciones \
-  --allow-unauthenticated \
-  --region=europe-west1 \
-  --ingress=internal \
-  --set-env-vars="PROJECT_ID=${PROJECT_ID},BQ_DATASET=erein_operaciones,GCS_BUCKET=${PROJECT_ID}-erein-docs" \
-  --source .
-```
-
-2. Open the Cloud Run URL in your local browser. **You will receive a 404 / Forbidden error** because the MCP Server is no longer exposed to the public internet. However, running the `curl` handshake from your Cloud Workstation terminal still succeeds because your workstation sits inside `adk-workshop-vpc`.
-
-3. If you test the agent right now from the [Agent Runtime](https://console.cloud.google.com/agent-platform/runtimes) Playground, the MCP tool calls will fail because Agent Runtime runs in a Google-managed tenant network without direct access to your private VPC.
-
-4. Let's create the subnet and PSC Network Attachment that Agent Gateway will use to ingress into your VPC:
-
-```bash
-gcloud compute networks subnets create agent-egress-subnet \
-  --network=adk-workshop-vpc \
-  --range=10.2.0.0/24 \
-  --region=europe-west1 \
-  --enable-private-ip-google-access
-```
-
-5. Grant the Vertex AI / Agent Platform Service Agent the `compute.networkAdmin` and `dns.peer` roles:
-
-```bash
-export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform.iam.gserviceaccount.com" \
-  --role="roles/compute.networkAdmin"
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform.iam.gserviceaccount.com" \
-  --role="roles/dns.peer"
-```
-
-6. Create the PSC Network Attachment referencing `agent-egress-subnet`:
-
-```bash
-gcloud compute network-attachments create mcp-network-attachment \
-  --region=europe-west1 \
-  --connection-preference=ACCEPT_AUTOMATIC \
-  --subnets=agent-egress-subnet
-
-export NETWORK_ATTACHMENT="projects/$PROJECT_ID/regions/europe-west1/networkAttachments/mcp-network-attachment"
-```
-
-7. Create a **Model Armor** template in `europe-west1` to enforce prompt injection, jailbreak, and sensitive data guardrails on agent traffic:
-
-```bash
-gcloud config set api_endpoint_overrides/modelarmor "https://modelarmor.europe-west1.rep.googleapis.com/"
-gcloud model-armor templates create erein-operaciones-armor \
-  --location=europe-west1 \
-  --project=$PROJECT_ID \
-  --rai-settings-filters='[{"filterType":"HATE_SPEECH","confidenceLevel":"MEDIUM_AND_ABOVE"},{"filterType":"DANGEROUS","confidenceLevel":"MEDIUM_AND_ABOVE"}]' \
-  --pi-and-jailbreak-filter-settings-enforcement=ENABLED \
-  --pi-and-jailbreak-filter-settings-confidence-level=LOW_AND_ABOVE
-```
-
-8. Set up the **Agent Gateway** in egress mode `AGENT_TO_ANYWHERE` through the Google Cloud Console:
-    1. Go to the [Agent Gateways page](https://console.cloud.google.com/agent-platform/gateways).
-    2. Click **Add Gateway**.
-    3. In the **Name** field, enter **`erein-agent-gateway-egress`**.
-    4. In **Region**, select **`europe-west1`**.
-    5. In **Deployment mode**, select **Google-managed**.
-    6. In **Agent registries**, select **Regional registry**.
-    7. Under **Governed Access Path**, select **Agent-to-Anywhere (egress)**.
-    8. Under **Access Authorization**, select **Audit-only**.
-    9. In **Policy Model**, select **Unified Access Policy**.
-    10. Enable **Model Armor** and select the **`erein-operaciones-armor`** template created in Step 7 (or keep it in Audit/Inspect mode if preferred).
-    11. Click **Add Gateway** (creation takes ~5 minutes).
-
-9. After the Gateway creation completes, attach your PSC Network Attachment:
-    1. Click on **`erein-agent-gateway-egress`**.
-    2. At the bottom in the **Network attachment** field, select **`mcp-network-attachment`**.
-    3. Click **Save**.
-
-10. Store the Gateway resource name in `GATEWAY_NAME` and grant the Agent Gateway Service Agent the required network and DNS roles:
-
-```bash
-export GATEWAY_NAME=$(gcloud network-services agent-gateways describe erein-agent-gateway-egress --location=europe-west1 --format="yaml(name)" | awk '{print $2}')
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-agentgateway.iam.gserviceaccount.com" \
-  --role="roles/compute.networkAdmin"
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-agentgateway.iam.gserviceaccount.com" \
-  --role="roles/dns.peer"
-```
-
-11. Create an authorization policy on the gateway and configure DNS peering for `run.app.`:
-
-```bash
-curl -X POST \
-  "https://networksecurity.googleapis.com/v1alpha1/projects/${PROJECT_ID}/locations/europe-west1/authzPolicies?authzPolicyId=erein-agent-gateway-egress-authz-allow-all" \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-  -H "X-Goog-User-Project: ${PROJECT_NUMBER}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "target": {
-      "resources": [
-        "'"${GATEWAY_NAME}"'"
-      ]
-    },
-    "httpRules": [
-      {
-        "to": {
-          "operations": [
-            {
-              "paths": [
-                {
-                  "prefix": "/"
-                }
-              ]
-            }
-          ]
-        }
-      }
-    ],
-    "action": "ALLOW",
-    "policyProfile": "REQUEST_AUTHZ"
-  }'
-
-curl -X PATCH \
-  "https://networkservices.googleapis.com/v1alpha1/projects/${PROJECT_ID}/locations/europe-west1/agentGateways/erein-agent-gateway-egress?updateMask=networkConfig.dnsPeeringConfig" \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-  -H "X-Goog-User-Project: ${PROJECT_NUMBER}" \
-  -H "Content-Type: application/json" \
-  -d @- <<EOF
-{
-  "networkConfig": {
-    "dnsPeeringConfig": {
-      "domains": [
-        "run.app."
-      ],
-      "targetProject": "${PROJECT_ID}",
-      "targetNetwork": "projects/${PROJECT_ID}/global/networks/adk-workshop-vpc"
-    }
-  }
-}
-EOF
-```
-
-12. Confirm that the Gateway configuration and PSC connection endpoint are active:
-
-```bash
-gcloud network-services agent-gateways describe erein-agent-gateway-egress \
-  --location=europe-west1 \
-  --format="yaml(registries,networkConfig,name)"
-
-gcloud compute network-attachments describe mcp-network-attachment \
-  --region=europe-west1 \
-  --format="yaml(connectionEndpoints)"
-```
-
-13. Update your ADK agent configuration in `agents-cli` to route egress traffic through the Agent Gateway and redeploy:
-
-```bash
-cd ~/labs/erein_agents_workshop/erein-operational-reviewer
-agents-cli scaffold enhance . --agent-gateway
-agents-cli deploy --project $PROJECT_ID --region europe-west1 --agent-identity --agent-gateway-egress $GATEWAY_NAME
-```
-
-14. Test the agent again from the [Agent Runtime](https://console.cloud.google.com/agent-platform/runtimes) Playground—it can now securely invoke the private Cloud Run MCP Server through Agent Gateway!
-
-## Task 5.- Publishing your Agent to Gemini Enterprise & Running the Operational Review Sequence
+## Task 4.- Publishing your Agent to Gemini Enterprise & Running the Operational Review Sequence
 
 In this task we will publish the Agent running in Agent Runtime into **Gemini Enterprise** so EREIN's Operations analysts can interact with it under corporate governance, and we will test the key operational scenarios requested by EREIN.
 
@@ -551,20 +376,11 @@ Realiza la revisión operativa completa del expediente SYN-009, que presenta dif
 
 - **Expected Behavior**: Simultaneously resolves both discrepancies: excludes the 400 €/month transfers from the customer's own external account (verified by ownership certificate `SYN-009-E09`, setting `ingreso_actualizado_eur_mes = 2200` per `P01 P02`) and registers the undeclared 150 €/month financial installment (verified by contract `SYN-009-E10` and monthly debits `SYN-009-E06`, `SYN-009-E08`, setting `cuota_actualizada_eur_mes = 150` per `P05`), recording state **`Resuelto`** under **`P01 P02 P05 P09`**.
 
-## Task 6.- Creating an MCP Server Datastore in Gemini Enterprise and Building a No-Code Agent
+## Task 5.- Creating an MCP Server Datastore in Gemini Enterprise and Building a No-Code Agent
 
 In this task we will publish our MCP Server (`mcp-erein-operaciones`) as a tool connector in Gemini Enterprise and build a **No-Code Agent** directly in the Gemini Enterprise Agent Builder.
 
-1. First, update the ingress of the `mcp-erein-operaciones` Cloud Run service from `internal` back to `all` so that Gemini Enterprise can reach the MCP Server endpoint when registering and invoking actions:
-
-```bash
-cd ~/labs/erein_agents_workshop/mcp_erein_operaciones
-gcloud run services update mcp-erein-operaciones \
-  --region=europe-west1 \
-  --ingress=all
-```
-
-2. Register the MCP Server as a Connected Data Store:
+1. Register the MCP Server as a Connected Data Store:
    1. Go to the [Gemini Enterprise Applications console](https://console.cloud.google.com/gemini-enterprise/apps) and click on your **EREIN App**.
    2. On the left panel click on **Connected data stores** -> **New data store**.
    3. Under **Custom MCP Server**, click on **Add MCP Server**.
@@ -572,7 +388,7 @@ gcloud run services update mcp-erein-operaciones \
    5. Click **Continue**, enter "**MCP Operaciones EREIN**" as your Data connector name, and click **Create**.
    6. Click on **Actions** -> **Reload custom actions**, select the 5 operational tools (`consultar_expediente`, `leer_documento`, `consultar_transacciones`, `consultar_historial_laboral`, `registrar_accion_expediente`), and click **Enable actions**.
 
-3. Create the No-Code Chat Agent in Gemini Enterprise:
+2. Create the No-Code Chat Agent in Gemini Enterprise:
    1. Open your Gemini Enterprise Web App (`https://vertexaisearch.cloud.google.com/...`), click on **Agents** -> **New agent** -> **Chat Agent** -> **Build manually**.
    2. Click on **My Agent**, name it "**Agente Revisor Operativo No-Code**", and set the description to "**Agente No-Code para revisión operativa de expedientes de financiación (DEMO-2)**".
    3. Paste the system instructions from `erein_agent_reference/prompts/task6_nocode_instructions.txt`:
@@ -609,7 +425,7 @@ Tu misión es realizar la revisión operativa de solicitudes de financiación (e
    5. In **Connectors**, remove Google Search and select only "**MCP Operaciones EREIN**".
    6. Click **Create** and then **Chat with Agent** to test cases `SYN-003`, `SYN-004`, `SYN-005`, `SYN-007`, and `SYN-010`.
 
-## Task 7.- Observability, End-to-End Tracing, Automated 10-Case Evaluation & Architecture Q&A
+## Task 6.- Observability, End-to-End Tracing, Automated 10-Case Evaluation & Architecture Q&A
 
 In the final task of the workshop, we cover **end-to-end observability**, **automated evaluation across all 10 synthetic cases**, and **enterprise governance patterns**.
 
