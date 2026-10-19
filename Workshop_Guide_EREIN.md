@@ -348,6 +348,7 @@ export NETWORK_ATTACHMENT="projects/$PROJECT_ID/regions/europe-west1/networkAtta
 7. Create a **Model Armor** template in `europe-west1` to enforce prompt injection, jailbreak, and sensitive data guardrails on agent traffic:
 
 ```bash
+gcloud config set api_endpoint_overrides/modelarmor "https://modelarmor.europe-west1.rep.googleapis.com/"
 gcloud model-armor templates create erein-operaciones-armor \
   --location=europe-west1 \
   --project=$PROJECT_ID \

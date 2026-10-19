@@ -58,6 +58,8 @@ gcloud services enable \
   discoveryengine.googleapis.com \
   --project="${PROJECT_ID}"
 
+gcloud config set api_endpoint_overrides/modelarmor "https://modelarmor.europe-west1.rep.googleapis.com/" >/dev/null 2>&1 || true
+
 # 2. Create BigQuery Dataset and Load 01_Datos Tables
 echo "[2/5] Creating BigQuery dataset '${BQ_DATASET}' and loading 01_Datos..."
 if ! bq --project_id="${PROJECT_ID}" ls --dataset_id="${BQ_DATASET}" >/dev/null 2>&1; then
