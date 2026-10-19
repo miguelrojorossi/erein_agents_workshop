@@ -138,6 +138,7 @@ cd erein_agents_workshop
 ```bash
 export PROJECT_ID="YOUR_PROJECT_ID"
 gcloud auth login
+gcloud auth application-default login
 gcloud config set project $PROJECT_ID
 ./scripts/bootstrap_erein_env.sh
 source .env.workshop

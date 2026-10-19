@@ -45,6 +45,11 @@ gcloud services enable \
   run.googleapis.com \
   cloudbuild.googleapis.com \
   artifactregistry.googleapis.com \
+  cloudresourcemanager.googleapis.com \
+  telemetry.googleapis.com \
+  cloudtrace.googleapis.com \
+  logging.googleapis.com \
+  monitoring.googleapis.com \
   compute.googleapis.com \
   dns.googleapis.com \
   networkservices.googleapis.com \
