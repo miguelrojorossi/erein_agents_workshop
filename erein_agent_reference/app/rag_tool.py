@@ -123,25 +123,30 @@ def consultar_politica(consulta: str) -> str:
         )
 
     try:
-        import vertexai
+        from google.auth.transport.requests import AuthorizedSession
 
-        try:
-            from vertexai import rag
-        except ImportError:
-            from vertexai.preview import rag
-
-        loc_match = re.search(r"/locations/([^/]+)/ragCorpora/", rag_corpus)
-        corpus_location = loc_match.group(1) if loc_match else region
-        creds = _get_gcp_credentials(project_id)
-        vertexai.init(
-            project=project_id, location=corpus_location, credentials=creds
+        loc_match = re.search(
+            r"^projects/([^/]+)/locations/([^/]+)/ragCorpora/", rag_corpus
         )
+        corpus_project = loc_match.group(1) if loc_match else project_id
+        corpus_location = loc_match.group(2) if loc_match else region
+        parent = f"projects/{corpus_project}/locations/{corpus_location}"
+        base_url = f"https://{corpus_location}-aiplatform.googleapis.com/v1"
+
+        creds = _get_gcp_credentials(project_id)
+        authed_session = AuthorizedSession(creds)
+
         if not rag_corpus:
-            for c in rag.list_corpora():
-                if c.display_name == "erein-demo2-rag-corpus" or not rag_corpus:
-                    rag_corpus = c.name
-                    if c.display_name == "erein-demo2-rag-corpus":
+            list_resp = authed_session.get(
+                f"{base_url}/{parent}/ragCorpora", timeout=30
+            )
+            list_resp.raise_for_status()
+            for c in list_resp.json().get("ragCorpora", []):
+                if c.get("displayName") == "erein-demo2-rag-corpus" or not rag_corpus:
+                    rag_corpus = c.get("name", "")
+                    if c.get("displayName") == "erein-demo2-rag-corpus":
                         break
+
         if not rag_corpus:
             return json.dumps(
                 {
@@ -155,23 +160,41 @@ def consultar_politica(consulta: str) -> str:
                 indent=2,
             )
 
-        retrieval_cfg = rag.RagRetrievalConfig(top_k=10)
-        response = rag.retrieval_query(
-            rag_resources=[rag.RagResource(rag_corpus=rag_corpus)],
-            text=f"{consulta} Política de revisión operativa DEMO-2 Procedimiento operativo DEMO-2",
-            rag_retrieval_config=retrieval_cfg,
+        payload = {
+            "vertexRagStore": {
+                "ragResources": [{"ragCorpus": rag_corpus}],
+            },
+            "query": {
+                "text": (
+                    f"{consulta} Política de revisión operativa DEMO-2 "
+                    "Procedimiento operativo DEMO-2"
+                ),
+                "ragRetrievalConfig": {"topK": 10},
+            },
+        }
+        retrieve_resp = authed_session.post(
+            f"{base_url}/{parent}:retrieveContexts",
+            json=payload,
+            timeout=30,
         )
-        contexts = getattr(getattr(response, "contexts", None), "contexts", [])
+        retrieve_resp.raise_for_status()
+        contexts = (
+            retrieve_resp.json().get("contexts", {}).get("contexts", [])
+        )
         fragments: list[dict[str, Any]] = []
         for ctx in contexts:
             fragments.append(
                 {
-                    "source_uri": getattr(ctx, "source_uri", ""),
-                    "source_display_name": getattr(
-                        ctx, "source_display_name", "03_Conocimiento/DEMO-2"
+                    "source_uri": ctx.get("sourceUri")
+                    or ctx.get("source_uri", ""),
+                    "source_display_name": ctx.get("sourceDisplayName")
+                    or ctx.get("source_display_name", "03_Conocimiento/DEMO-2"),
+                    "score": (
+                        ctx.get("score")
+                        if "score" in ctx
+                        else ctx.get("distance")
                     ),
-                    "score": getattr(ctx, "score", None),
-                    "texto": getattr(ctx, "text", ""),
+                    "texto": ctx.get("text", ""),
                 }
             )
         return json.dumps(

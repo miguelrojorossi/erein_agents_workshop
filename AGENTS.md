@@ -13,8 +13,9 @@ When asked to create or scaffold the `erein-operational-reviewer` agent using `a
 3. **Bake Environment Defaults for Agent Runtime Deployment**:
    - Read the current values of `$MCP_URL`, `$RAG_CORPUS_NAME`, and `$PROJECT_ID` from the shell environment or `.env.workshop` and use them as the fallback defaults in `os.environ.get(...)` inside `erein-operational-reviewer/app/agent.py` and `erein-operational-reviewer/app/rag_tool.py` so the deployed Agent Runtime container connects to the attendee's Cloud Run MCP server and `europe-west4` RAG corpus out of the box.
 
-4. **Dependencies (`pyproject.toml`)**:
-   - **Do NOT** add a duplicate `google-cloud-aiplatform` line to `pyproject.toml` if `google-cloud-aiplatform` (such as `google-cloud-aiplatform[evaluation,agent-engines]>=...`) is already present, as duplicate entries break `uv add` during `agents-cli scaffold enhance`. Only add `pypdf>=5.0.0` if it is not already listed.
+4. **Dependencies (`pyproject.toml` / `requirements.txt`) — Do NOT Manually Declare `google-cloud-aiplatform` or `opentelemetry-*`**:
+   - **Do NOT** declare `google-cloud-aiplatform` or explicit OpenTelemetry libraries (`opentelemetry-*`) directly in the agent's `pyproject.toml` or `requirements.txt`.
+   - `agents-cli` (`scaffold create`, `scaffold enhance`, and `deploy`) handles declaring and matching these dependencies automatically. Declaring them manually can cause package version mismatches between the Vertex SDK and OpenTelemetry that silently break trace instrumentation in Agent Runtime (`erein_agent_reference/app/rag_tool.py` calls the Vertex AI RAG Engine `:retrieveContexts` API via `google.auth.transport.requests.AuthorizedSession`, requiring no extra packages).
 
 5. **Export `app` and Prepare `05_Evaluacion` Evaluation Suite (`tests/eval/`)**:
    - Ensure `erein-operational-reviewer/app/agent.py` defines `app = App(root_agent=root_agent, name="app")` (from `google.adk.apps import App`) and `app/__init__.py` exports `from .agent import app, root_agent`.

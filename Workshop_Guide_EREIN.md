@@ -236,8 +236,9 @@ Use agents-cli to create an agent named "erein-operational-reviewer" with the fo
      4) Call `consultar_transacciones(caso_id, desde, hasta)` and/or `consultar_historial_laboral(caso_id)` when bank movements, account summaries, or employment history need to be contrasted.
      5) Call `registrar_accion_expediente(...)` to record the operational decision in BigQuery in strict compliance with the Policy and Procedure retrieved from `consultar_politica`.
 3. Tool Integration (Native Vertex AI RAG Engine Tool + Remote MCP Server):
-   - Native ADK Tool (`consultar_politica`): Copy or use `erein_agent_reference/app/rag_tool.py` inside the ADK agent (which sets `GOOGLE_API_ENABLE_RUNTIME_BOUND_TOKEN="false"` and `GOOGLE_API_PREVENT_AGENT_TOKEN_SHARING_FOR_GCP_SERVICES="false"` for Agent Identity and calls `vertexai.rag.retrieval_query` against the Vertex AI RAG Engine corpus "$RAG_CORPUS_NAME" in region "europe-west4").
+   - Native ADK Tool (`consultar_politica`): Copy or use `erein_agent_reference/app/rag_tool.py` inside the ADK agent (which queries the Vertex AI RAG Engine corpus "$RAG_CORPUS_NAME" in region "europe-west4").
    - MCP Server ("$MCP_URL"): Connect using ADK `MCPToolset` (`StreamableHTTPConnectionParams`) to call `consultar_expediente`, `leer_documento`, `consultar_transacciones`, `consultar_historial_laboral`, and `registrar_accion_expediente`.
+   - Dependencies Best Practice: Do NOT declare `google-cloud-aiplatform` or explicit OpenTelemetry (`opentelemetry-*`) libraries directly in the agent's `pyproject.toml` or `requirements.txt`. `agents-cli` handles declaring and matching these dependencies automatically, and declaring them manually can cause package version mismatches that silently break OpenTelemetry trace instrumentation in Agent Runtime.
 4. Output Delivery:
    - Always cite the retrieved policy version and rule IDs from Vertex AI RAG Engine, the `evidencia_id`, `documento_id` + page number, and confirm the `accion_id` and `estado` persisted in BigQuery.
 ```
