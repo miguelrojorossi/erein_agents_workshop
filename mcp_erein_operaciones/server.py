@@ -155,7 +155,7 @@ def consultar_expediente(caso_id: str) -> str:
               IF(v.tipo_fuente = 'Nómina', NULL, v.importe_eur) AS importe_eur,
               IF(v.tipo_fuente = 'Nómina', 'Leer el PDF vinculado o solicitarlo si está ausente', v.contenido) AS contenido
             FROM `{project_id}.{BQ_DATASET}.evidencias` v
-            WHERE v.caso_id = e.caso_id
+            WHERE v.caso_id = @caso_id
             ORDER BY v.evidencia_id
           ) AS evidencias,
           ARRAY(
@@ -171,7 +171,7 @@ def consultar_expediente(caso_id: str) -> str:
               x.pagina,
               x.disponible_inicial
             FROM `{project_id}.{BQ_DATASET}.documentos` x
-            WHERE x.caso_id = e.caso_id
+            WHERE x.caso_id = @caso_id
             ORDER BY x.documento_id
           ) AS documentos,
           ARRAY(
@@ -193,7 +193,7 @@ def consultar_expediente(caso_id: str) -> str:
               a.tratamiento_alerta,
               a.version_politica
             FROM `{project_id}.{BQ_DATASET}.acciones` a
-            WHERE a.caso_id = e.caso_id
+            WHERE a.caso_id = @caso_id
             ORDER BY a.fecha_accion ASC
           ) AS acciones_previas
         FROM `{project_id}.{BQ_DATASET}.expedientes` e
