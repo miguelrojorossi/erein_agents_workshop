@@ -10,6 +10,8 @@ WORKDIR /app
 
 # Allow statements and log messages to immediately appear in the logs
 ENV PYTHONUNBUFFERED=1
+# Run Streamable HTTP in stateless mode so warm Agent Runtime instances and Cloud Run scaling never hit "Session not found"
+ENV FASTMCP_STATELESS_HTTP=true
 
 # Install dependencies
 RUN uv sync

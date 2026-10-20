@@ -171,6 +171,8 @@ gcloud run deploy mcp-erein-operaciones \
 
 Once the process has finished it will output the URL (`*.run.app`) where the MCP Server is hosted.
 
+> **Note:** `mcp_erein_operaciones` is configured with **stateless Streamable HTTP** (`stateless_http=True` in `server.py` and `FASTMCP_STATELESS_HTTP=true` in `Dockerfile`). Because all 5 operational tools are stateless over BigQuery and Cloud Storage, handling each HTTP request statelessly ensures that warm Agent Runtime instances (`--min-instances 1`) and Cloud Run horizontal scaling or revision updates never fail with `MCPError: Session not found`.
+
 2. Assign the Cloud Run URL to the variable `MCP_URL` with a trailing `/mcp`, and run a JSON-RPC `initialize` handshake against your Cloud Run endpoint from the Cloud Workstation:
 
 ```bash
