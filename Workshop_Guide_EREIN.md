@@ -164,6 +164,7 @@ gcloud run deploy mcp-erein-operaciones \
   --allow-unauthenticated \
   --region=europe-west1 \
   --ingress=all \
+  --min-instances=1 \
   --set-env-vars="PROJECT_ID=${PROJECT_ID},BQ_DATASET=erein_operaciones,GCS_BUCKET=${PROJECT_ID}-erein-docs" \
   --source .
 ```
@@ -273,6 +274,7 @@ agents-cli deploy \
   --project $PROJECT_ID \
   --region europe-west1 \
   --agent-identity \
+  --min-instances 1 \
   --update-env-vars "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true"
 ```
 
