@@ -275,20 +275,28 @@ agents-cli deploy \
   --region europe-west1 \
   --agent-identity \
   --min-instances 1 \
-  --update-env-vars "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true"
+  --update-env-vars "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true,OTEL_RESOURCE_ATTRIBUTES=gcp.project_id=${PROJECT_ID}"
 ```
 
 The deployment takes a few minutes to complete. After it finishes, the CLI outputs a confirmation message and a link to your agent's playground in the Google Cloud Console.
 
-7. Check your agent's **SPIFFE ID (Agent Identity)** and grant it access to your Vertex AI RAG Engine corpus and Cloud Trace telemetry:
+7. Check your agent's **SPIFFE ID (Agent Identity)** and grant it access to your Vertex AI RAG Engine corpus and Cloud Trace / Cloud Telemetry:
     1. In the Google Cloud Console, go to the [Agent Runtime Deployments](https://console.cloud.google.com/agent-platform/runtimes) page.
     2. Find the row for `erein-operational-reviewer`, and in the **Identity** column click **Copy to clipboard**. The identity looks similar to:
        `principal://agents.global.org-ORGANIZATION_ID.system.id.goog/resources/aiplatform/projects/PROJECT_NUMBER/locations/europe-west1/reasoningEngines/ENGINE_ID`
-    3. Grant your agent's SPIFFE principal `roles/aiplatform.user`, `roles/cloudtrace.agent`, and `roles/telemetry.tracesWriter` so it can query Vertex AI RAG Engine and export full OpenTelemetry traces under its own cryptographic identity:
+    3. Grant your agent's SPIFFE principal the required Vertex AI, Cloud Trace, Cloud Telemetry, Cloud Logging, and Resource Manager (`roles/browser`) roles so it can query Vertex AI RAG Engine, resolve project metadata, and export full OpenTelemetry traces under its own cryptographic identity:
 
 ```bash
 export AGENT_SPIFFE_ID="PASTE_YOUR_AGENT_SPIFFE_ID_HERE"
-for ROLE in roles/aiplatform.user roles/cloudtrace.agent roles/telemetry.tracesWriter; do
+for ROLE in \
+  roles/aiplatform.user \
+  roles/cloudtrace.agent \
+  roles/telemetry.tracesWriter \
+  roles/telemetry.writer \
+  roles/logging.logWriter \
+  roles/monitoring.metricWriter \
+  roles/browser \
+  roles/serviceusage.serviceUsageConsumer; do
   gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="${AGENT_SPIFFE_ID}" \
     --role="${ROLE}"
