@@ -1,75 +1,26 @@
 #!/usr/bin/env python3
-"""Simulates customer document submission / clarification for EREIN PoC cases.
+"""Simulates customer document submission / clarification for EREIN PoC cases in Cloud Storage & BigQuery.
 
 Specifically implements Section 4 ('Simulación de SYN-002') of Guia_Implementacion_PoC.pdf:
   - Keeps 04_Simulacion_Cliente isolated from initial agent access.
   - After the agent requests the missing September payslip for SYN-002 (setting state
     to 'Pendiente de evidencia'), this script:
-      1. Uploads 04_Simulacion_Cliente/SYN-002_septiembre.pdf to Cloud Storage (and/or
-         enables it in the local runtime state).
+      1. Uploads 04_Simulacion_Cliente/SYN-002_septiembre.pdf to Cloud Storage.
       2. Incorporates the response evidence SYN-002-E05 into `evidencias` without
          duplicating keys.
       3. Incorporates the document reference DOC-SYN-002-E05 (and updates DOC-SYN-002-E04)
          in `documentos` so the agent can read the September payslip upon re-analysis.
   - Also supports `--case SYN-007` (customer clarification message on rental income)
-    and `--reset` to restore the initial Phase 1 state.
+    and `--reset` to restore the initial Phase 1 state in BigQuery.
 """
 
 import argparse
-import json
 import os
 from pathlib import Path
-import shutil
 import subprocess
-import sys
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_ROOT = REPO_ROOT / "EREIN_CdU_Revision_Operativa_Agentica"
-LOCAL_STATE_FILE = REPO_ROOT / "mcp_erein_operaciones" / "data" / "runtime_state.json"
-
-
-def update_local_state(case_id: str, reset: bool = False) -> None:
-    """Updates local runtime state file so local/fallback MCP mode reflects the event."""
-    LOCAL_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    state = {"syn002_responded": False, "syn007_clarified": False, "acciones": []}
-    if LOCAL_STATE_FILE.exists():
-        try:
-            state = json.loads(LOCAL_STATE_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-
-    if reset:
-        if case_id in ("SYN-002", "ALL"):
-            state["syn002_responded"] = False
-        if case_id in ("SYN-007", "ALL"):
-            state["syn007_clarified"] = False
-        if case_id == "ALL":
-            state["acciones"] = []
-        else:
-            state["acciones"] = [
-                a for a in state.get("acciones", []) if a.get("caso_id") != case_id
-            ]
-        LOCAL_STATE_FILE.write_text(
-            json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
-        print(f"[Local State] Reset simulation state for {case_id}.")
-        return
-
-    if case_id == "SYN-002":
-        state["syn002_responded"] = True
-        print(
-            "[Local State] Activated SYN-002 Phase 2: "
-            "SYN-002-E05 and DOC-SYN-002-E05 (SYN-002_septiembre.pdf) are now available."
-        )
-    elif case_id == "SYN-007":
-        state["syn007_clarified"] = True
-        print(
-            "[Local State] Activated SYN-007 clarification event RESP-SYN-007-01."
-        )
-
-    LOCAL_STATE_FILE.write_text(
-        json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
 
 
 def _run_bq_query(project_id: str, sql: str) -> None:
@@ -94,37 +45,34 @@ def update_cloud_state(
     reset: bool = False,
 ) -> None:
     """Uploads the reserved PDF to GCS and updates BigQuery tables idempotently via gcloud/bq CLI."""
-    if not shutil.which("bq") or not shutil.which("gcloud"):
-        print(
-            "[Cloud State] gcloud/bq CLI not found; skipping cloud update (local state updated)."
-        )
-        return
-
     table_evidencias = f"`{project_id}.{dataset_id}.evidencias`"
     table_documentos = f"`{project_id}.{dataset_id}.documentos`"
 
     if reset:
         if case_id in ("SYN-002", "ALL"):
-            try:
-                _run_bq_query(
-                    project_id,
-                    f"DELETE FROM {table_evidencias} WHERE evidencia_id = 'SYN-002-E05'",
-                )
-                _run_bq_query(
-                    project_id,
-                    f"DELETE FROM {table_documentos} WHERE documento_id = 'DOC-SYN-002-E05'",
-                )
-                _run_bq_query(
-                    project_id,
-                    f"""
-                    UPDATE {table_documentos}
-                    SET ruta_relativa = NULL, disponibilidad = 'Ausente', disponible_inicial = FALSE
-                    WHERE documento_id = 'DOC-SYN-002-E04'
-                    """,
-                )
-                print("[BigQuery] Restored SYN-002 to initial Phase 1 state.")
-            except Exception as exc:
-                print(f"[Cloud State] Skipping cloud reset ({exc}).")
+            _run_bq_query(
+                project_id,
+                f"DELETE FROM {table_evidencias} WHERE evidencia_id = 'SYN-002-E05'",
+            )
+            _run_bq_query(
+                project_id,
+                f"DELETE FROM {table_documentos} WHERE documento_id = 'DOC-SYN-002-E05'",
+            )
+            _run_bq_query(
+                project_id,
+                f"""
+                UPDATE {table_documentos}
+                SET ruta_relativa = NULL, disponibilidad = 'Ausente', disponible_inicial = FALSE
+                WHERE documento_id = 'DOC-SYN-002-E04'
+                """,
+            )
+            print("[BigQuery] Restored SYN-002 to initial Phase 1 state.")
+        if case_id in ("SYN-007", "ALL"):
+            _run_bq_query(
+                project_id,
+                f"DELETE FROM {table_evidencias} WHERE evidencia_id = 'RESP-SYN-007-01'",
+            )
+            print("[BigQuery] Restored SYN-007 to initial state.")
         return
 
     if case_id == "SYN-002":
@@ -229,7 +177,7 @@ def update_cloud_state(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Simulate customer response for SYN-002 (or SYN-007)."
+        description="Simulate customer response in Cloud Storage & BigQuery for SYN-002 (or SYN-007)."
     )
     parser.add_argument(
         "--case",
@@ -240,7 +188,7 @@ def main() -> None:
     parser.add_argument(
         "--project-id",
         default=os.environ.get("PROJECT_ID", ""),
-        help="Google Cloud Project ID (optional for local mode)",
+        help="Google Cloud Project ID",
     )
     parser.add_argument(
         "--dataset",
@@ -255,19 +203,12 @@ def main() -> None:
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="Reset the simulated customer response back to initial Phase 1 state",
-    )
-    parser.add_argument(
-        "--local-only",
-        action="store_true",
-        help="Only update local state without calling BigQuery/GCS",
+        help="Reset the simulated customer response back to initial Phase 1 state in BigQuery",
     )
     args = parser.parse_args()
 
-    update_local_state(args.case, reset=args.reset)
-
     project_id = args.project_id
-    if not project_id and not args.local_only and not args.reset:
+    if not project_id:
         try:
             project_id = subprocess.check_output(
                 ["gcloud", "config", "get-value", "project"],
@@ -279,15 +220,19 @@ def main() -> None:
         except Exception:
             project_id = ""
 
-    if not args.local_only and project_id:
-        bucket = args.gcs_bucket or f"{project_id}-erein-docs"
-        update_cloud_state(
-            project_id=project_id,
-            dataset_id=args.dataset,
-            gcs_bucket=bucket,
-            case_id=args.case,
-            reset=args.reset,
+    if not project_id:
+        raise RuntimeError(
+            "PROJECT_ID is required. Set PROJECT_ID or pass --project-id."
         )
+
+    bucket = args.gcs_bucket or f"{project_id}-erein-docs"
+    update_cloud_state(
+        project_id=project_id,
+        dataset_id=args.dataset,
+        gcs_bucket=bucket,
+        case_id=args.case,
+        reset=args.reset,
+    )
 
     if not args.reset and args.case == "SYN-002":
         print(

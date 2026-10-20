@@ -4,7 +4,7 @@ FROM python:3.12-slim
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Copy project and bundled fallback data into /app
+# Copy project into /app
 COPY . /app
 WORKDIR /app
 

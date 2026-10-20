@@ -1,2 +1,0 @@
-documento_id,caso_id,evidencia_id,fase,tipo_documento,periodo,ruta_relativa,disponibilidad,pagina,disponible_inicial
-DOC-SYN-002-E05,SYN-002,SYN-002-E05,Respuesta simulada,Nómina,Septiembre,04_Simulacion_Cliente/SYN-002_septiembre.pdf,Disponible,1,false
