@@ -54,6 +54,11 @@ gcloud services enable \
   dns.googleapis.com \
   networkservices.googleapis.com \
   networksecurity.googleapis.com \
+  serviceextensions.googleapis.com \
+  agentregistry.googleapis.com \
+  iap.googleapis.com \
+  dlp.googleapis.com \
+  observability.googleapis.com \
   modelarmor.googleapis.com \
   discoveryengine.googleapis.com \
   --project="${PROJECT_ID}"
