@@ -36,7 +36,7 @@ echo " BQ Dataset : ${BQ_DATASET} (${BQ_LOCATION})"
 echo " GCS Bucket : gs://${GCS_BUCKET}"
 echo "=============================================================================="
 
-# 1. Enable Required APIs
+# 1. Enable Required APIs (split into two batches to stay under the 20-service gcloud limit)
 echo "[1/5] Enabling Google Cloud APIs..."
 gcloud services enable \
   aiplatform.googleapis.com \
@@ -50,7 +50,11 @@ gcloud services enable \
   cloudtrace.googleapis.com \
   logging.googleapis.com \
   monitoring.googleapis.com \
+  observability.googleapis.com \
   compute.googleapis.com \
+  --project="${PROJECT_ID}"
+
+gcloud services enable \
   dns.googleapis.com \
   networkservices.googleapis.com \
   networksecurity.googleapis.com \
@@ -58,7 +62,6 @@ gcloud services enable \
   agentregistry.googleapis.com \
   iap.googleapis.com \
   dlp.googleapis.com \
-  observability.googleapis.com \
   modelarmor.googleapis.com \
   discoveryengine.googleapis.com \
   --project="${PROJECT_ID}"
