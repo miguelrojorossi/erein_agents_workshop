@@ -552,25 +552,37 @@ gcloud services enable \
   --project="${PROJECT_ID}"
 
 # 2. Provision the Google-managed service agents if not already created
-for api in aiplatform.googleapis.com networkservices.googleapis.com serviceextensions.googleapis.com modelarmor.googleapis.com; do
-  gcloud beta services identity create --service="${api}" --project="${PROJECT_ID}" 2>/dev/null || true
-done
+gcloud beta services identity create --service=aiplatform.googleapis.com --project="${PROJECT_ID}" 2>/dev/null || true
+gcloud beta services identity create --service=networkservices.googleapis.com --project="${PROJECT_ID}" 2>/dev/null || true
+gcloud beta services identity create --service=serviceextensions.googleapis.com --project="${PROJECT_ID}" 2>/dev/null || true
+gcloud beta services identity create --service=modelarmor.googleapis.com --project="${PROJECT_ID}" 2>/dev/null || true
 
-# 3. Grant Model Armor callout permissions to the Reasoning Engine & Service Extensions service agents
-for sa in \
-  "service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
-  "service-${PROJECT_NUMBER}@gcp-sa-dep.iam.gserviceaccount.com"; do
-  for role in \
-    "roles/modelarmor.calloutUser" \
-    "roles/modelarmor.user" \
-    "roles/serviceusage.serviceUsageConsumer"; do
-    gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-      --member="serviceAccount:${sa}" \
-      --role="${role}" \
-      --condition=None \
-      --quiet
-  done
-done
+# 3. Grant Model Armor permissions to the AI Platform Reasoning Engine Service Agent
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.calloutUser" \
+  --condition=None --quiet
+
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.user" \
+  --condition=None --quiet
+
+# 4. Grant Model Armor & Service Usage permissions to the Service Extensions (DEP) Service Agent
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-dep.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.calloutUser" \
+  --condition=None --quiet
+
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-dep.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.user" \
+  --condition=None --quiet
+
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-dep.iam.gserviceaccount.com" \
+  --role="roles/serviceusage.serviceUsageConsumer" \
+  --condition=None --quiet
 ```
 
 ### 2. Create the Model Armor Template (`erein-ingress-ma-template`) in `europe-west1`
@@ -664,7 +676,7 @@ source ~/labs/erein_agents_workshop/.env.workshop
 
 # 1. Create the Google-managed CLIENT_TO_AGENT Agent Gateway in europe-west1
 cat <<EOF > /tmp/erein-agent-gateway-ingress.yaml
-name: projects/${PROJECT_ID}/locations/europe-west1/agentGateways/erein-agent-gateway-ingress
+name: erein-agent-gateway-ingress
 protocols:
   - MCP
 googleManaged:
@@ -678,17 +690,17 @@ gcloud network-services agent-gateways import erein-agent-gateway-ingress \
 
 # 2. Create the Service Extension pointing to Model Armor in europe-west1
 cat <<EOF > /tmp/erein-ingress-ma-ext.yaml
-name: projects/${PROJECT_ID}/locations/europe-west1/authzExtensions/erein-ingress-ma-ext
-loadBalancingScheme: INTERNAL_MANAGED
-authority: modelarmor.europe-west1.rep.googleapis.com
-service: https://modelarmor.europe-west1.rep.googleapis.com/
-timeout: 1.0s
-failOpen: false
-forwardHeaders:
-  - Authorization
+name: erein-ingress-ma-ext
+service: modelarmor.europe-west1.rep.googleapis.com
 metadata:
-  request_Profile_id: "projects/${PROJECT_ID}/locations/europe-west1/templates/erein-ingress-ma-template"
-  response_Profile_id: "projects/${PROJECT_ID}/locations/europe-west1/templates/erein-ingress-ma-template"
+  model_armor_settings: '[
+    {
+      "request_template_id": "projects/${PROJECT_ID}/locations/europe-west1/templates/erein-ingress-ma-template",
+      "response_template_id": "projects/${PROJECT_ID}/locations/europe-west1/templates/erein-ingress-ma-template"
+    }
+  ]'
+failOpen: true
+timeout: 5s
 EOF
 
 gcloud service-extensions authz-extensions import erein-ingress-ma-ext \
@@ -698,21 +710,16 @@ gcloud service-extensions authz-extensions import erein-ingress-ma-ext \
 
 # 3. Bind the Model Armor extension to the Ingress Agent Gateway via a CONTENT_AUTHZ policy
 cat <<EOF > /tmp/erein-ingress-ma-policy.yaml
-name: projects/${PROJECT_ID}/locations/europe-west1/authzPolicies/erein-ingress-ma-policy
+name: erein-ingress-ma-policy
 target:
-  loadBalancingScheme: INTERNAL_MANAGED
   resources:
     - "projects/${PROJECT_ID}/locations/europe-west1/agentGateways/erein-agent-gateway-ingress"
-action: CUSTOM
 policyProfile: CONTENT_AUTHZ
+action: CUSTOM
 customProvider:
   authzExtension:
     resources:
       - "projects/${PROJECT_ID}/locations/europe-west1/authzExtensions/erein-ingress-ma-ext"
-httpRules:
-  - to:
-      operations:
-        - httpMethod: "POST"
 EOF
 
 gcloud beta network-security authz-policies import erein-ingress-ma-policy \
