@@ -65,6 +65,42 @@ gcloud services enable \
 
 gcloud config set api_endpoint_overrides/modelarmor "https://modelarmor.europe-west1.rep.googleapis.com/" >/dev/null 2>&1 || true
 
+echo "  -> Provisioning Google-managed service agents and Model Armor IAM bindings..."
+PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format="value(projectNumber)")"
+
+for SERVICE in \
+  aiplatform.googleapis.com \
+  networkservices.googleapis.com \
+  serviceextensions.googleapis.com \
+  modelarmor.googleapis.com; do
+  gcloud beta services identity create --service="${SERVICE}" --project="${PROJECT_ID}" --quiet >/dev/null 2>&1 || true
+done
+
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.calloutUser" \
+  --condition=None --quiet >/dev/null
+
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.user" \
+  --condition=None --quiet >/dev/null
+
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-dep.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.calloutUser" \
+  --condition=None --quiet >/dev/null
+
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-dep.iam.gserviceaccount.com" \
+  --role="roles/modelarmor.user" \
+  --condition=None --quiet >/dev/null
+
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-dep.iam.gserviceaccount.com" \
+  --role="roles/serviceusage.serviceUsageConsumer" \
+  --condition=None --quiet >/dev/null
+
 # 2. Create BigQuery Dataset and Load 01_Datos Tables
 echo "[2/5] Creating BigQuery dataset '${BQ_DATASET}' and loading 01_Datos..."
 if ! bq --project_id="${PROJECT_ID}" ls --dataset_id="${BQ_DATASET}" >/dev/null 2>&1; then
