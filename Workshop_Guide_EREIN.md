@@ -530,62 +530,7 @@ flowchart LR
 
 > **Regional Alignment Requirement (`europe-west1`)**: For Client-to-Agent ingress governance on Agent Runtime, the **Model Armor template**, the **Ingress Agent Gateway**, and the **Agent Runtime service** must all reside in the **same region (`europe-west1`)**, and the ADK agent must be deployed with **SPIFFE Agent Identity** (`--agent-identity`, which you enabled in Task 3).
 
-### 1. Enable Required APIs and Grant Service Agent IAM Roles
-
-When a Client-to-Agent Agent Gateway invokes Model Armor during request/response inspection, Google Cloud's **AI Platform Reasoning Engine Service Agent** (`gcp-sa-aiplatform-re`) and **Service Extensions Service Agent** (`gcp-sa-dep`) execute the Model Armor callouts on your project's behalf.
-
-Run the following commands in your Cloud Workstation terminal to ensure all required APIs and service identities exist and have the necessary Model Armor roles:
-
-```bash
-source ~/labs/erein_agents_workshop/.env.workshop
-export PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format="value(projectNumber)")
-
-# 1. Enable required APIs for Agent Gateway + Model Armor content security
-gcloud services enable \
-  aiplatform.googleapis.com \
-  networkservices.googleapis.com \
-  networksecurity.googleapis.com \
-  serviceextensions.googleapis.com \
-  modelarmor.googleapis.com \
-  dlp.googleapis.com \
-  observability.googleapis.com \
-  --project="${PROJECT_ID}"
-
-# 2. Provision the Google-managed service agents if not already created
-gcloud beta services identity create --service=aiplatform.googleapis.com --project="${PROJECT_ID}" 2>/dev/null || true
-gcloud beta services identity create --service=networkservices.googleapis.com --project="${PROJECT_ID}" 2>/dev/null || true
-gcloud beta services identity create --service=serviceextensions.googleapis.com --project="${PROJECT_ID}" 2>/dev/null || true
-gcloud beta services identity create --service=modelarmor.googleapis.com --project="${PROJECT_ID}" 2>/dev/null || true
-
-# 3. Grant Model Armor permissions to the AI Platform Reasoning Engine Service Agent
-gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
-  --role="roles/modelarmor.calloutUser" \
-  --condition=None --quiet
-
-gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
-  --role="roles/modelarmor.user" \
-  --condition=None --quiet
-
-# 4. Grant Model Armor & Service Usage permissions to the Service Extensions (DEP) Service Agent
-gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-dep.iam.gserviceaccount.com" \
-  --role="roles/modelarmor.calloutUser" \
-  --condition=None --quiet
-
-gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-dep.iam.gserviceaccount.com" \
-  --role="roles/modelarmor.user" \
-  --condition=None --quiet
-
-gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-dep.iam.gserviceaccount.com" \
-  --role="roles/serviceusage.serviceUsageConsumer" \
-  --condition=None --quiet
-```
-
-### 2. Create the Model Armor Template (`erein-ingress-ma-template`) in `europe-west1`
+### 1. Create the Model Armor Template (`erein-ingress-ma-template`) in `europe-west1`
 
 You will create a regional Model Armor template in `europe-west1` named **`erein-ingress-ma-template`** that enforces:
 *   **Prompt Injection and Jailbreak detection** (`LOW_AND_ABOVE` confidence level) — protects the agent against adversarial attempts to bypass `DEMO-2` policy rules (such as `P09` authority limits) or exfiltrate BigQuery data.
@@ -647,7 +592,7 @@ gcloud beta model-armor templates describe erein-ingress-ma-template \
    *   **Logging**: Enable **Log sanitization operations**.
 3. Click **Create**.
 
-### 3. Create the Client-to-Agent Ingress Agent Gateway (`erein-agent-gateway-ingress`)
+### 2. Create the Client-to-Agent Ingress Agent Gateway (`erein-agent-gateway-ingress`)
 
 Next, create a Google-managed **Client-to-Agent (ingress)** Agent Gateway in `europe-west1` and attach your `erein-ingress-ma-template` Model Armor template.
 
@@ -741,7 +686,7 @@ gcloud network-services agent-gateways describe erein-agent-gateway-ingress \
   --project="${PROJECT_ID}"
 ```
 
-### 4. Bind `erein-operational-reviewer` to the Ingress Agent Gateway
+### 3. Bind `erein-operational-reviewer` to the Ingress Agent Gateway
 
 Now update your deployed `erein-operational-reviewer` Agent Runtime service in `europe-west1` so all client-to-agent traffic routes through `erein-agent-gateway-ingress` by passing `--agent-gateway-ingress "${INGRESS_GATEWAY_URI}"` to `agents-cli deploy`:
 
@@ -764,7 +709,7 @@ Once the deployment update finishes, verify the binding in the Google Cloud Cons
 1. Navigate to **[Agent Platform > Agent Runtime](https://console.cloud.google.com/agent-platform/agents?region=europe-west1)** and select **`erein-operational-reviewer`**.
 2. Open the **Service Configuration** (or **Networking / Security**) tab and confirm that **Ingress Agent Gateway** is set to `erein-agent-gateway-ingress`.
 
-### 5. Test Legitimate vs. Adversarial Prompts & Inspect Model Armor Spans
+### 4. Test Legitimate vs. Adversarial Prompts & Inspect Model Armor Spans
 
 You will now test two requests against your protected Agent Runtime endpoint:
 1. **Test A (Legitimate Operational Case Review)**: Ask the agent to review dossier `SYN-003` (which has an OCR discrepancy between `22,000 €` and `2,200 €` on `DOC-SYN-003-E04`). Model Armor inspects and allows both the prompt and the agent's response.
