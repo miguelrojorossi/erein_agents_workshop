@@ -695,14 +695,12 @@ source ~/labs/erein_agents_workshop/.env.workshop
 cd ~/labs/erein_agents_workshop/erein-operational-reviewer
 
 agents-cli deploy \
-  --engine-name erein-operational-reviewer \
-  --project "${PROJECT_ID}" \
+  --project $PROJECT_ID \
   --region europe-west1 \
   --agent-identity \
   --agent-gateway-ingress "${INGRESS_GATEWAY_URI}" \
   --min-instances 1 \
-  --max-instances 10 \
-  --env-vars "MCP_URL=${MCP_URL},RAG_CORPUS_NAME=${RAG_CORPUS_NAME}"
+  --update-env-vars "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=SPAN_AND_EVENT,ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS=true,OTEL_RESOURCE_ATTRIBUTES=gcp.project_id=${PROJECT_ID}"
 ```
 
 Once the deployment update finishes, verify the binding in the Google Cloud Console:
